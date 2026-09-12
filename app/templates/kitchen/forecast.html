@@ -1,0 +1,174 @@
+{% extends "base.html" %}
+
+{% block title %}AI Meal Demand Forecasting - EcoPlate AI{% endblock %}
+
+{% block content %}
+<div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center mb-4 gap-2">
+    <div>
+        <h4 class="fw-bold mb-1"><i class="bi bi-cpu-fill text-warning me-2"></i> AI-Powered Meal Demand Forecaster</h4>
+        <p class="text-muted small mb-0">Predictive attendance modeling & dynamic batch-sizing to prevent kitchen overproduction waste</p>
+    </div>
+    <span class="badge bg-success bg-opacity-10 text-success border border-success border-opacity-25 px-3 py-2">
+        <i class="bi bi-check-all me-1"></i> AI Model Confidence: {{ pred.confidence_score }}%
+    </span>
+</div>
+
+<div class="row g-4">
+    <!-- Left Column: Input Form / Controls -->
+    <div class="col-lg-5">
+        <div class="card eco-card shadow-sm border-0">
+            <div class="card-header card-header-clean bg-light">
+                <h6 class="fw-bold mb-0"><i class="bi bi-sliders me-2"></i> Meal Preparation Planning Parameters</h6>
+            </div>
+            <div class="card-body p-4">
+                <form method="GET" action="{{ url_for('ai.forecast') }}" id="forecastForm">
+                    <div class="mb-3">
+                        <label class="form-label small fw-semibold">Total Registered Resident / Campus Strength</label>
+                        <div class="input-group">
+                            <span class="input-group-text bg-light"><i class="bi bi-people-fill text-muted"></i></span>
+                            <input type="number" name="capacity" id="capacity" class="form-control" value="{{ capacity }}" min="50" max="10000" step="10" required>
+                        </div>
+                        <div class="form-text">Total student/employee mess subscriber base.</div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label small fw-semibold">Meal Session</label>
+                        <select name="meal_session" id="meal_session" class="form-select">
+                            <option value="Breakfast" {% if meal_session == 'Breakfast' %}selected{% endif %}>Breakfast</option>
+                            <option value="Lunch" {% if meal_session == 'Lunch' %}selected{% endif %}>Lunch</option>
+                            <option value="Snacks" {% if meal_session == 'Snacks' %}selected{% endif %}>Evening Snacks</option>
+                            <option value="Dinner" {% if meal_session == 'Dinner' %}selected{% endif %}>Dinner</option>
+                        </select>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label small fw-semibold">Day of Week</label>
+                        <select name="day_of_week" id="day_of_week" class="form-select">
+                            <option value="0" {% if day_of_week == 0 %}selected{% endif %}>Monday</option>
+                            <option value="1" {% if day_of_week == 1 %}selected{% endif %}>Tuesday</option>
+                            <option value="2" {% if day_of_week == 2 %}selected{% endif %}>Wednesday</option>
+                            <option value="3" {% if day_of_week == 3 %}selected{% endif %}>Thursday</option>
+                            <option value="4" {% if day_of_week == 4 %}selected{% endif %}>Friday (Early weekend drop)</option>
+                            <option value="5" {% if day_of_week == 5 %}selected{% endif %}>Saturday (Weekend pattern)</option>
+                            <option value="6" {% if day_of_week == 6 %}selected{% endif %}>Sunday (Weekend pattern)</option>
+                        </select>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label small fw-semibold">Campus Calendar Event / Context</label>
+                        <select name="event_type" id="event_type" class="form-select">
+                            <option value="None" {% if event_type == 'None' %}selected{% endif %}>Normal Working Day</option>
+                            <option value="Exam Period" {% if event_type == 'Exam Period' %}selected{% endif %}>Semester Exams Week</option>
+                            <option value="Holiday/Long Weekend" {% if event_type == 'Holiday/Long Weekend' %}selected{% endif %}>Long Weekend / Mass Outing</option>
+                            <option value="College Festival / Celebration" {% if event_type == 'College Festival / Celebration' %}selected{% endif %}>Fest / Guest High Attendance</option>
+                        </select>
+                    </div>
+
+                    <div class="mb-4">
+                        <div class="d-flex justify-content-between align-items-center mb-1">
+                            <label class="form-label small fw-semibold mb-0">Dynamic Safety Buffer Margin</label>
+                            <span class="badge bg-success" id="bufferDisplay">{{ buffer_percent }}%</span>
+                        </div>
+                        <input type="range" name="buffer_percent" id="buffer_percent" class="form-range" min="2" max="15" step="0.5" value="{{ buffer_percent }}">
+                        <div class="form-text">EcoPlate AI replaces typical 20% over-cooking with a lean dynamic 4-8% safety buffer.</div>
+                    </div>
+
+                    <button type="submit" class="btn btn-ecogreen w-100 py-2">
+                        <i class="bi bi-cpu me-1"></i> Calculate AI Production Plan
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Right Column: AI Predictions & Production Plan -->
+    <div class="col-lg-7">
+        <!-- Main AI Output Card -->
+        <div class="card eco-card shadow-sm border-0 mb-4">
+            <div class="card-header card-header-clean bg-light d-flex justify-content-between align-items-center">
+                <span class="fw-bold"><i class="bi bi-graph-up-arrow text-primary me-2"></i> Calibrated Kitchen Production Plan</span>
+                <span class="badge bg-primary">{{ pred.day_name }} &bull; {{ pred.meal_session }}</span>
+            </div>
+            <div class="card-body p-4">
+                <div class="row g-3 text-center mb-4">
+                    <div class="col-md-4">
+                        <div class="p-3 bg-light rounded-3 border">
+                            <span class="small text-muted text-uppercase fw-bold">Predicted Headcount</span>
+                            <div class="fs-2 fw-bold text-dark">{{ pred.predicted_headcount }}</div>
+                            <small class="text-muted">Expected turn-up eaters</small>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="p-3 bg-success bg-opacity-10 rounded-3 border border-success border-opacity-25">
+                            <span class="small text-success text-uppercase fw-bold">Target Portions to Cook</span>
+                            <div class="fs-2 fw-bold text-success">{{ pred.optimized_prep_portions }}</div>
+                            <small class="text-success">+{{ pred.buffer_percent_used }}% safe buffer</small>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="p-3 bg-light rounded-3 border">
+                            <span class="small text-muted text-uppercase fw-bold">Food Quantity Needed</span>
+                            <div class="fs-2 fw-bold text-primary">{{ pred.food_kg_required }} <small class="fs-6">kg</small></div>
+                            <small class="text-muted">Cooked finished weight</small>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Savings Callout -->
+                <div class="p-3 mb-4 rounded-3 border border-success bg-success bg-opacity-10 d-flex flex-column flex-md-row justify-content-between align-items-center gap-2">
+                    <div>
+                        <div class="fw-bold text-success fs-5">
+                            <i class="bi bi-shield-check me-1"></i> {{ pred.portions_saved }} Portions Saved from Waste!
+                        </div>
+                        <div class="small text-success">
+                            Prevents ~{{ pred.food_kg_saved }} kg overproduction & eliminates ₹{{ "{:,.2f}".format(pred.estimated_cost_savings_inr) }} wasted expenditure.
+                        </div>
+                    </div>
+                    <span class="badge bg-success fs-6 px-3 py-2">
+                        -{{ ((pred.portions_saved / pred.traditional_prep_portions) * 100)|round(1) }}% Overproduction
+                    </span>
+                </div>
+
+                <!-- Visual Comparison Chart -->
+                <h6 class="fw-bold text-secondary mb-3"><i class="bi bi-bar-chart-line me-1"></i> Preparation Comparison: Standard vs EcoPlate AI</h6>
+                <div style="height: 220px; position: relative;" class="mb-4">
+                    <canvas id="forecastComparisonChart"></canvas>
+                </div>
+
+                <!-- Actionable Kitchen Guidance -->
+                <div class="border-top pt-3">
+                    <h6 class="fw-bold text-dark mb-2"><i class="bi bi-lightbulb-fill text-warning me-1"></i> Smart Chef Actionable Recommendations:</h6>
+                    <ul class="list-unstyled mb-0">
+                        {% for tip in pred.actionable_tips %}
+                        <li class="d-flex align-items-start mb-2 small">
+                            <i class="bi bi-arrow-right-circle-fill text-success me-2 mt-1"></i>
+                            <span>{{ tip }}</span>
+                        </li>
+                        {% endfor %}
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    document.addEventListener('DOMContentLoaded', () => {
+        // Slider live label
+        const slider = document.getElementById('buffer_percent');
+        const display = document.getElementById('bufferDisplay');
+        if (slider && display) {
+            slider.addEventListener('input', (e) => {
+                display.textContent = `${e.target.value}%`;
+            });
+        }
+
+        // Initialize Comparison Bar Chart
+        const traditionalKg = {{ pred.food_kg_traditional }};
+        const optimizedKg = {{ pred.food_kg_required }};
+        initForecastComparisonChart('forecastComparisonChart', traditionalKg, optimizedKg);
+    });
+</script>
+{% endblock %}

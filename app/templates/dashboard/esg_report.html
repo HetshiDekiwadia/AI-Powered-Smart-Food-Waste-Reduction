@@ -1,0 +1,143 @@
+{% extends "base.html" %}
+
+{% block title %}Institutional ESG & Sustainability Audit Report - EcoPlate AI{% endblock %}
+
+{% block content %}
+<div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center mb-4 gap-2">
+    <div>
+        <h4 class="fw-bold mb-1"><i class="bi bi-file-earmark-bar-graph text-success me-2"></i> Institutional ESG & Sustainability Audit Report</h4>
+        <p class="text-muted small mb-0">Auditable report aligned with UN Sustainable Development Goal (SDG) 12.3: Zero Food Waste</p>
+    </div>
+    <div>
+        <button class="btn btn-outline-secondary btn-sm" onclick="window.print();">
+            <i class="bi bi-printer-fill me-1"></i> Print / Save as PDF
+        </button>
+    </div>
+</div>
+
+<!-- Report Sheet Card -->
+<div class="card eco-card border-0 shadow-sm p-4 p-md-5 bg-white">
+    <!-- Header -->
+    <div class="d-flex justify-content-between align-items-start border-bottom pb-4 mb-4">
+        <div>
+            <span class="brand-badge fs-6 mb-2 d-inline-block"><i class="bi bi-flower1"></i> EcoPlate AI Sustainability Index</span>
+            <h3 class="fw-bold text-dark mt-1">Food Waste Mitigation & Social Redistribution Certificate</h3>
+            <p class="text-muted small mb-0">Issued to: <strong>{{ current_user.organization_name }}</strong></p>
+        </div>
+        <div class="text-end">
+            <span class="badge bg-success bg-opacity-10 text-success border border-success border-opacity-25 px-3 py-2 fs-6">
+                <i class="bi bi-patch-check-fill me-1"></i> Verified Audit Ledger
+            </span>
+            <div class="small text-muted mt-2">Evaluation Cycle: 2026 Season</div>
+        </div>
+    </div>
+
+    <!-- Impact Highlights Row -->
+    <div class="row g-4 mb-5">
+        <div class="col-md-3">
+            <div class="p-3 bg-light rounded-3 text-center border">
+                <span class="small text-muted text-uppercase fw-bold">Surplus Meals Saved</span>
+                <div class="fs-2 fw-bold text-success mt-1">{{ impact.meals_saved }}</div>
+                <small class="text-muted">Portions redirected</small>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="p-3 bg-light rounded-3 text-center border">
+                <span class="small text-muted text-uppercase fw-bold">CO₂e Abatement</span>
+                <div class="fs-2 fw-bold text-primary mt-1">{{ impact.co2_saved_kg }} <span class="fs-6">kg</span></div>
+                <small class="text-muted">Avoided landfill methane</small>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="p-3 bg-light rounded-3 text-center border">
+                <span class="small text-muted text-uppercase fw-bold">Virtual Water Saved</span>
+                <div class="fs-2 fw-bold text-info mt-1">{{ "{:,.0f}".format(impact.water_saved_liters) }} <span class="fs-6">L</span></div>
+                <small class="text-muted">Agricultural water footprint</small>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="p-3 bg-light rounded-3 text-center border">
+                <span class="small text-muted text-uppercase fw-bold">Avoided Cost Loss</span>
+                <div class="fs-2 fw-bold text-dark mt-1">₹{{ "{:,.2f}".format(impact.cost_saved_inr) }}</div>
+                <small class="text-muted">Direct financial savings</small>
+            </div>
+        </div>
+    </div>
+
+    <!-- Equivalency Benchmarks Table -->
+    <h5 class="fw-bold text-dark mb-3"><i class="bi bi-globe me-2 text-primary"></i> Environmental Offset Equivalencies</h5>
+    <div class="table-responsive mb-5">
+        <table class="table table-bordered align-middle">
+            <thead class="table-light">
+                <tr>
+                    <th>Environmental Indicator</th>
+                    <th>Calculated Equivalence</th>
+                    <th>Reference Standard</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td><strong>Passenger Vehicle Driving Offset</strong></td>
+                    <td><span class="fw-bold text-primary">{{ impact.car_kms_equivalent }} kilometers</span> of standard passenger car emissions</td>
+                    <td class="text-muted small">EPA GHG Equivalencies Calculator (~0.19 kg CO2/km)</td>
+                </tr>
+                <tr>
+                    <td><strong>Domestic Water Showers Saved</strong></td>
+                    <td><span class="fw-bold text-info">{{ impact.showers_equivalent }} full domestic showers</span></td>
+                    <td class="text-muted small">UNEP Embedded Water Index (~65 Liters / shower)</td>
+                </tr>
+                <tr>
+                    <td><strong>Annual Tree Carbon Absorption</strong></td>
+                    <td><span class="fw-bold text-success">{{ impact.trees_equivalent }} tree seedlings</span> growing for 10 years</td>
+                    <td class="text-muted small">FAO Urban Forestry Carbon Standard (~21.7 kg CO2/tree/yr)</td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+
+    <!-- Verified Redistribution Transactions -->
+    <h5 class="fw-bold text-dark mb-3"><i class="bi bi-shield-check me-2 text-success"></i> Audited Surplus Redirection Transactions</h5>
+    <div class="table-responsive mb-4">
+        <table class="table table-eco table-sm align-middle">
+            <thead>
+                <tr>
+                    <th>Claim #</th>
+                    <th>Dispatched Item</th>
+                    <th>Volume (Portions)</th>
+                    <th>Beneficiary Partner (NGO)</th>
+                    <th>Verification OTP</th>
+                    <th>Completion Timestamp</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for c in claims %}
+                <tr>
+                    <td class="fw-semibold">#CLM-{{ c.id }}</td>
+                    <td>{{ c.listing.food_name }}</td>
+                    <td class="fw-bold text-success">{{ c.beneficiaries_count }} meals ({{ c.listing.weight_approx_kg }} kg)</td>
+                    <td>{{ c.claimant_ngo.organization_name }}</td>
+                    <td><code>{{ c.verification_otp }}</code></td>
+                    <td class="small text-muted">{{ c.delivered_at.strftime('%d %b %Y, %I:%M %p') if c.delivered_at else 'Verified' }}</td>
+                </tr>
+                {% else %}
+                <tr>
+                    <td colspan="6" class="text-center py-3 text-muted">No completed redistributions recorded yet.</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+    <!-- Sign-off Block -->
+    <div class="border-top pt-4 mt-4 d-flex flex-column flex-md-row justify-content-between align-items-center text-muted small">
+        <div>
+            <div>System Verification ID: <strong>ECOPLATE-SIH26234-CERT-{{ current_user.id }}</strong></div>
+            <div>Generated autonomously by EcoPlate AI Engine</div>
+        </div>
+        <div class="mt-3 mt-md-0 text-md-end">
+            <div>Authorized Ecological Integrity Audit Record</div>
+            <div class="text-success fw-bold"><i class="bi bi-patch-check"></i> Cryptographically Logged</div>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,100 @@
+{% extends "base.html" %}
+
+{% block title %}Waste Pattern Analytics - EcoPlate AI{% endblock %}
+
+{% block content %}
+<div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center mb-4 gap-2">
+    <div>
+        <h4 class="fw-bold mb-1"><i class="bi bi-pie-chart text-danger me-2"></i> Kitchen Waste Stream Pattern Analytics</h4>
+        <p class="text-muted small mb-0">AI-driven root-cause diagnosis and actionable recommendations</p>
+    </div>
+    <a href="{{ url_for('kitchen.log_waste') }}" class="btn btn-ecogreen btn-sm">
+        <i class="bi bi-plus-lg me-1"></i> New Entry
+    </a>
+</div>
+
+<!-- High Level Insights Row -->
+<div class="row g-3 mb-4">
+    <div class="col-md-4">
+        <div class="p-3 bg-white border rounded-3 shadow-sm">
+            <span class="small text-muted text-uppercase fw-bold">Cumulative Waste Measured</span>
+            <h3 class="fw-bold text-danger mb-0">{{ analysis.total_waste_kg }} kg</h3>
+            <small class="text-muted">Total recorded discard</small>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="p-3 bg-white border rounded-3 shadow-sm">
+            <span class="small text-muted text-uppercase fw-bold">Highest Loss Food Item</span>
+            <h4 class="fw-bold text-dark mb-0 text-truncate">{{ analysis.top_wasted_item }}</h4>
+            <small class="text-muted">Primary contributor to volume</small>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="p-3 bg-white border rounded-3 shadow-sm">
+            <span class="small text-muted text-uppercase fw-bold">Peak Waste Meal Session</span>
+            <h3 class="fw-bold text-warning mb-0">{{ analysis.worst_session }}</h3>
+            <small class="text-muted">Needs portion size calibration</small>
+        </div>
+    </div>
+</div>
+
+<!-- Breakdown Cards -->
+<div class="row g-4">
+    <div class="col-md-6">
+        <div class="card eco-card shadow-sm border-0 h-100">
+            <div class="card-header card-header-clean bg-light">
+                <h6 class="fw-bold mb-0"><i class="bi bi-diagram-3-fill me-2 text-primary"></i> Volume by Waste Stream</h6>
+            </div>
+            <div class="card-body">
+                <ul class="list-group list-group-flush">
+                    {% for cat, weight in analysis.category_breakdown.items() %}
+                    <li class="list-group-item d-flex justify-content-between align-items-center px-0">
+                        <span class="fw-medium">{{ cat }}</span>
+                        <span class="badge bg-secondary rounded-pill fs-6">{{ weight }} kg</span>
+                    </li>
+                    {% else %}
+                    <li class="list-group-item text-muted text-center">No categories recorded yet.</li>
+                    {% endfor %}
+                </ul>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-6">
+        <div class="card eco-card shadow-sm border-0 h-100">
+            <div class="card-header card-header-clean bg-light">
+                <h6 class="fw-bold mb-0"><i class="bi bi-clock-history me-2 text-warning"></i> Volume by Meal Session</h6>
+            </div>
+            <div class="card-body">
+                <ul class="list-group list-group-flush">
+                    {% for sess, weight in analysis.session_breakdown.items() %}
+                    <li class="list-group-item d-flex justify-content-between align-items-center px-0">
+                        <span class="fw-medium">{{ sess }}</span>
+                        <span class="badge bg-primary bg-opacity-10 text-primary border border-primary border-opacity-25 rounded-pill fs-6">{{ weight }} kg</span>
+                    </li>
+                    {% else %}
+                    <li class="list-group-item text-muted text-center">No sessions recorded yet.</li>
+                    {% endfor %}
+                </ul>
+            </div>
+        </div>
+    </div>
+
+    <!-- AI Diagnostic Insights -->
+    <div class="col-12">
+        <div class="card eco-card shadow-sm border-0 bg-light">
+            <div class="card-body p-4">
+                <h5 class="fw-bold text-dark mb-3"><i class="bi bi-lightbulb-fill text-warning me-2"></i> AI Waste Mitigation Diagnosis</h5>
+                <div class="d-flex flex-column gap-2">
+                    {% for ins in analysis.insights %}
+                    <div class="p-3 bg-white rounded-3 border d-flex align-items-start gap-2 shadow-sm">
+                        <i class="bi bi-check-circle-fill text-success fs-5 mt-n1"></i>
+                        <span class="text-dark">{{ ins }}</span>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

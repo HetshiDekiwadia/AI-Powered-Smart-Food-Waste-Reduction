@@ -1,0 +1,92 @@
+{% extends "base.html" %}
+
+{% block title %}Log Kitchen Food Waste - EcoPlate AI{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-lg-8">
+        <div class="card eco-card shadow-sm border-0">
+            <div class="card-header card-header-clean bg-light d-flex justify-content-between align-items-center">
+                <div>
+                    <h5 class="fw-bold mb-0"><i class="bi bi-trash3 text-danger me-2"></i> Daily Kitchen Food Waste Entry</h5>
+                    <small class="text-muted">Standardized measurement for Institutional Kitchens & Processing Units</small>
+                </div>
+                <a href="{{ url_for('kitchen.waste_history') }}" class="btn btn-outline-secondary btn-sm">
+                    <i class="bi bi-list-check me-1"></i> View Log History
+                </a>
+            </div>
+            <div class="card-body p-4">
+                <form method="POST" action="{{ url_for('kitchen.log_waste') }}">
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <label class="form-label small fw-semibold">Entry Date</label>
+                            <input type="date" name="date" class="form-control" value="{{ today_str }}" required>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label small fw-semibold">Meal Session</label>
+                            <select name="meal_session" class="form-select" required>
+                                <option value="Lunch" selected>Lunch</option>
+                                <option value="Dinner">Dinner</option>
+                                <option value="Breakfast">Breakfast</option>
+                                <option value="Snacks">Evening Snacks</option>
+                            </select>
+                        </div>
+
+                        <div class="col-md-6">
+                            <label class="form-label small fw-semibold">Waste Category / Stream</label>
+                            <select name="waste_category" id="waste_category" class="form-select" required>
+                                <option value="Plate Waste" selected>Plate Waste (Left on dining plates by consumers)</option>
+                                <option value="Prep Waste">Preparation Waste (Vegetable skins, stems, trimmings)</option>
+                                <option value="Buffet Leftover">Buffet / Service Leftover (Excess cooked unserved food)</option>
+                                <option value="Spoilage">Spoilage (Storage deterioration, expired raw goods)</option>
+                            </select>
+                        </div>
+
+                        <div class="col-md-6">
+                            <label class="form-label small fw-semibold">Specific Food Item or Dish</label>
+                            <input type="text" name="food_item" class="form-control" placeholder="e.g. Cooked Rice & Dal, Mixed Veg, Rotis" required>
+                        </div>
+
+                        <div class="col-md-6">
+                            <label class="form-label small fw-semibold">Measured Waste Weight (Kilograms)</label>
+                            <div class="input-group">
+                                <input type="number" step="0.1" min="0.1" name="weight_kg" id="weight_kg" class="form-control" placeholder="0.0" required>
+                                <span class="input-group-text">kg</span>
+                            </div>
+                            <div class="form-text">Weighed using cafeteria scale at dish drop station.</div>
+                        </div>
+
+                        <div class="col-md-6">
+                            <label class="form-label small fw-semibold">Estimated Economic Value Lost</label>
+                            <div class="p-2 border rounded bg-light d-flex align-items-center justify-content-between">
+                                <span class="small text-muted">Auto-estimated loss:</span>
+                                <span class="fw-bold text-danger fs-5" id="cost_preview">₹0.00</span>
+                            </div>
+                            <div class="form-text">Based on institutional procurement index benchmarks.</div>
+                        </div>
+
+                        <div class="col-12">
+                            <label class="form-label small fw-semibold">Primary Root Cause / Operational Reason</label>
+                            <select name="reason" class="form-select mb-2">
+                                <option value="Over-serving portion sizes on dining plates">Over-serving portion sizes on dining plates</option>
+                                <option value="Turnout unexpectedly lower than forecast">Turnout unexpectedly lower than forecast</option>
+                                <option value="Preparation trimmings / cutting sorting">Preparation trimmings / cutting sorting</option>
+                                <option value="Recipe taste / seasoning feedback">Recipe taste / seasoning feedback</option>
+                                <option value="Equipment / cold storage malfunction">Equipment / cold storage malfunction</option>
+                                <option value="Other operational cause">Other operational cause</option>
+                            </select>
+                        </div>
+
+                        <div class="col-12 mt-4 pt-2 border-top d-flex justify-content-between align-items-center">
+                            <span class="small text-muted"><i class="bi bi-shield-check text-success me-1"></i> Data saved directly to SQLite repository</span>
+                            <button type="submit" class="btn btn-ecogreen px-4 py-2">
+                                <i class="bi bi-check2-circle me-1"></i> Record Waste Entry
+                            </button>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

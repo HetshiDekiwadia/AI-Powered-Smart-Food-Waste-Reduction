@@ -1,0 +1,92 @@
+{% extends "base.html" %}
+
+{% block title %}Kitchen Waste History - EcoPlate AI{% endblock %}
+
+{% block content %}
+<div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center mb-4 gap-2">
+    <div>
+        <h4 class="fw-bold mb-1"><i class="bi bi-clock-history text-danger me-2"></i> Food Waste Measurement Ledger</h4>
+        <p class="text-muted small mb-0">Auditable historical log of institutional kitchen waste streams</p>
+    </div>
+    <div class="d-flex gap-2">
+        <a href="{{ url_for('kitchen.log_waste') }}" class="btn btn-ecogreen btn-sm">
+            <i class="bi bi-plus-lg me-1"></i> New Waste Entry
+        </a>
+        <a href="{{ url_for('ai.analytics') }}" class="btn btn-outline-secondary btn-sm">
+            <i class="bi bi-pie-chart-fill me-1"></i> Pattern Analytics
+        </a>
+    </div>
+</div>
+
+<!-- Summary Cards -->
+<div class="row g-3 mb-4">
+    <div class="col-md-6">
+        <div class="p-3 bg-white border rounded-3 d-flex align-items-center justify-content-between shadow-sm">
+            <div>
+                <span class="small text-muted text-uppercase fw-bold">Aggregate Waste Measured</span>
+                <h3 class="fw-bold text-danger mb-0">{{ total_kg }} kg</h3>
+            </div>
+            <div class="kpi-icon-bubble bubble-rose"><i class="bi bi-trash3-fill"></i></div>
+        </div>
+    </div>
+    <div class="col-md-6">
+        <div class="p-3 bg-white border rounded-3 d-flex align-items-center justify-content-between shadow-sm">
+            <div>
+                <span class="small text-muted text-uppercase fw-bold">Total Monetary Value Lost</span>
+                <h3 class="fw-bold text-dark mb-0">₹{{ "{:,.2f}".format(total_cost) }}</h3>
+            </div>
+            <div class="kpi-icon-bubble bubble-amber"><i class="bi bi-currency-rupee"></i></div>
+        </div>
+    </div>
+</div>
+
+<!-- Waste Log Table -->
+<div class="card eco-card border-0 shadow-sm">
+    <div class="table-responsive">
+        <table class="table table-eco table-hover align-middle">
+            <thead>
+                <tr>
+                    <th>Date</th>
+                    <th>Session</th>
+                    <th>Waste Stream</th>
+                    <th>Food Item / Dish</th>
+                    <th>Weight</th>
+                    <th>Estimated Loss</th>
+                    <th>Root Cause Reason</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for log in logs %}
+                <tr>
+                    <td>
+                        <span class="fw-semibold">{{ log.date.strftime('%d %b %Y') }}</span>
+                    </td>
+                    <td>
+                        <span class="badge bg-light text-dark border">{{ log.meal_session }}</span>
+                    </td>
+                    <td>
+                        {% if log.waste_category == 'Plate Waste' %}
+                            <span class="badge bg-danger bg-opacity-10 text-danger border border-danger border-opacity-25">{{ log.waste_category }}</span>
+                        {% elif log.waste_category == 'Prep Waste' %}
+                            <span class="badge bg-warning bg-opacity-10 text-dark border border-warning border-opacity-25">{{ log.waste_category }}</span>
+                        {% elif log.waste_category == 'Spoilage' %}
+                            <span class="badge bg-secondary bg-opacity-10 text-secondary border">{{ log.waste_category }}</span>
+                        {% else %}
+                            <span class="badge bg-info bg-opacity-10 text-info border border-info border-opacity-25">{{ log.waste_category }}</span>
+                        {% endif %}
+                    </td>
+                    <td class="fw-semibold text-dark">{{ log.food_item }}</td>
+                    <td class="fw-bold text-danger">{{ log.weight_kg }} kg</td>
+                    <td class="fw-medium text-dark">₹{{ "{:,.2f}".format(log.estimated_cost_loss) }}</td>
+                    <td class="small text-muted">{{ log.reason or 'N/A' }}</td>
+                </tr>
+                {% else %}
+                <tr>
+                    <td colspan="7" class="text-center py-4 text-muted">No waste records found. Click 'New Waste Entry' to add one.</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}
