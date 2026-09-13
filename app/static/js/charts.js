@@ -6,6 +6,12 @@ function initWasteCategoryChart(canvasId, labels, data) {
     const ctx = document.getElementById(canvasId);
     if (!ctx) return;
 
+    // Prevent canvas reuse collisions
+    const existingChart = Chart.getChart(canvasId);
+    if (existingChart) {
+        existingChart.destroy();
+    }
+
     new Chart(ctx, {
         type: 'doughnut',
         data: {
@@ -17,7 +23,7 @@ function initWasteCategoryChart(canvasId, labels, data) {
                     '#f59e0b', // Prep Waste (Amber)
                     '#8b5cf6', // Spoilage (Purple)
                     '#3b82f6', // Buffet Leftover (Blue)
-                    '#10b981'  # Other
+                    '#10b981'  // Other (Green)
                 ],
                 borderWidth: 2,
                 borderColor: '#ffffff'
@@ -47,9 +53,20 @@ function initWasteCategoryChart(canvasId, labels, data) {
     });
 }
 
-function initForecastComparisonChart(canvasId, traditionalKg, optimizedKg) {
+function initForecastComparisonChart(canvasId, traditionalKg, optimizedKg, traditionalPortions, optimizedPortions) {
     const ctx = document.getElementById(canvasId);
     if (!ctx) return;
+
+    // Prevent canvas reuse collisions on dynamic recalculation
+    const existingChart = Chart.getChart(canvasId);
+    if (existingChart) {
+        existingChart.destroy();
+    }
+
+    const portionsData = [
+        traditionalPortions !== undefined ? traditionalPortions : null,
+        optimizedPortions !== undefined ? optimizedPortions : null
+    ];
 
     new Chart(ctx, {
         type: 'bar',
@@ -71,7 +88,13 @@ function initForecastComparisonChart(canvasId, traditionalKg, optimizedKg) {
                 tooltip: {
                     callbacks: {
                         label: function(context) {
-                            return ` ${context.raw} kg prepared`;
+                            const idx = context.dataIndex;
+                            const kgVal = context.raw;
+                            const portions = portionsData[idx];
+                            if (portions !== null && portions !== undefined) {
+                                return ` ${kgVal} kg (${portions} portions)`;
+                            }
+                            return ` ${kgVal} kg prepared`;
                         }
                     }
                 }

@@ -1,6 +1,6 @@
 import os
 from app import create_app, db
-from app.models import User, WasteLog, InventoryItem, SurplusListing, Claim
+from app.models import User, WasteLog, InventoryItem, SurplusListing, Claim, FoodPreparationPlan, FoodPreparationItem
 
 app = create_app()
 
@@ -12,7 +12,9 @@ def make_shell_context():
         'WasteLog': WasteLog,
         'InventoryItem': InventoryItem,
         'SurplusListing': SurplusListing,
-        'Claim': Claim
+        'Claim': Claim,
+        'FoodPreparationPlan': FoodPreparationPlan,
+        'FoodPreparationItem': FoodPreparationItem
     }
 
 if __name__ == '__main__':

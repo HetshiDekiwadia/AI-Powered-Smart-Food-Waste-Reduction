@@ -6,9 +6,46 @@ Handles surplus food matching, urgency priority scoring, and OTP verification wo
 import random
 from datetime import datetime, timezone
 
+def normalize_city(city):
+    """
+    Normalizes a city string for consistent, case-insensitive comparison:
+    - Returns None if city is None, empty, or whitespace.
+    - Trims leading/trailing whitespace.
+    - Condenses internal consecutive spaces.
+    - Converts to lowercase.
+    """
+    if not city:
+        return None
+    cleaned = " ".join(str(city).strip().split()).lower()
+    return cleaned if cleaned else None
+
+def clean_city_name(city):
+    """
+    Cleans a city name for storage:
+    - Trims leading/trailing whitespace.
+    - Condenses multiple spaces into a single space.
+    - Title-cases city name for clean UI presentation.
+    - Returns cleaned string or None.
+    """
+    if not city:
+        return None
+    cleaned = " ".join(str(city).strip().split())
+    return cleaned.title() if cleaned else None
+
+def cities_match(city_a, city_b):
+    """
+    Checks if two city names match (case-insensitive and whitespace-normalized).
+    Returns False if either city is None, empty, or whitespace.
+    """
+    norm_a = normalize_city(city_a)
+    norm_b = normalize_city(city_b)
+    if not norm_a or not norm_b:
+        return False
+    return norm_a == norm_b
+
 def generate_verification_otp():
-    """Generates a 6-digit numeric OTP for delivery confirmation."""
-    return f"{random.randint(100000, 999999)}"
+    """Generates a secure 6-digit numeric OTP for pickup delivery confirmation."""
+    return f"{random.SystemRandom().randint(100000, 999999)}"
 
 def calculate_listing_urgency(safe_until_dt):
     """

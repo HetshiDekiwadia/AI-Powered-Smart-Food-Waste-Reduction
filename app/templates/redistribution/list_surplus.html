@@ -13,28 +13,31 @@
                 </div>
             </div>
             <div class="card-body p-4">
-                <form method="POST" action="{{ url_for('donation.list_surplus') }}">
+                <form method="POST" action="{{ url_for('donation.list_surplus') }}" id="list_surplus_form" class="needs-validation" novalidate>
                     <div class="row g-3">
                         <div class="col-md-8">
                             <label class="form-label small fw-semibold">Food Name / Description</label>
-                            <input type="text" name="food_name" class="form-control" placeholder="e.g. Steamed Rice, Dal Makhani & Phulkas" required>
+                            <input type="text" name="food_name" class="form-control" placeholder="e.g. Steamed Rice, Dal Makhani & Phulkas" value="{{ form_data.get('food_name', '') }}" required>
+                            <div class="invalid-feedback">Please enter the surplus food name or description.</div>
                         </div>
                         <div class="col-md-4">
                             <label class="form-label small fw-semibold">Dietary Classification</label>
                             <select name="dietary_type" class="form-select" required>
-                                <option value="Vegetarian" selected>Vegetarian (Veg)</option>
-                                <option value="Non-Vegetarian">Non-Vegetarian</option>
-                                <option value="Vegan">Vegan</option>
-                                <option value="Bakery">Bakery / Confectionery</option>
+                                <option value="Vegetarian" {% if form_data.get('dietary_type') == 'Vegetarian' %}selected{% endif %}>Vegetarian (Veg)</option>
+                                <option value="Non-Vegetarian" {% if form_data.get('dietary_type') == 'Non-Vegetarian' %}selected{% endif %}>Non-Vegetarian</option>
+                                <option value="Vegan" {% if form_data.get('dietary_type') == 'Vegan' %}selected{% endif %}>Vegan</option>
+                                <option value="Bakery" {% if form_data.get('dietary_type') == 'Bakery' %}selected{% endif %}>Bakery / Confectionery</option>
                             </select>
+                            <div class="invalid-feedback">Please select a dietary classification.</div>
                         </div>
 
                         <div class="col-md-6">
                             <label class="form-label small fw-semibold">Available Portions (Number of People)</label>
                             <div class="input-group">
                                 <span class="input-group-text bg-light"><i class="bi bi-people-fill text-muted"></i></span>
-                                <input type="number" name="quantity_portions" class="form-control" min="5" max="5000" placeholder="e.g. 60" required>
+                                <input type="number" name="quantity_portions" class="form-control" min="1" max="10000" placeholder="e.g. 60" value="{{ form_data.get('quantity_portions', '') }}" required>
                                 <span class="input-group-text">meals</span>
+                                <div class="invalid-feedback">Available portions must be at least 1.</div>
                             </div>
                         </div>
 
@@ -42,43 +45,57 @@
                             <label class="form-label small fw-semibold">Approximate Total Weight</label>
                             <div class="input-group">
                                 <span class="input-group-text bg-light"><i class="bi bi-box-fill text-muted"></i></span>
-                                <input type="number" step="0.5" name="weight_approx_kg" class="form-control" placeholder="e.g. 25" required>
+                                <input type="number" step="0.5" min="0.5" max="5000" name="weight_approx_kg" class="form-control" placeholder="e.g. 25" value="{{ form_data.get('weight_approx_kg', '') }}" required>
                                 <span class="input-group-text">kg</span>
+                                <div class="invalid-feedback">Weight must be greater than 0 kg.</div>
                             </div>
                         </div>
 
                         <div class="col-md-6">
                             <label class="form-label small fw-semibold">Safe Consumption Window (Hours from now)</label>
                             <select name="safe_hours" class="form-select" required>
-                                <option value="2.0">Critical: 2 Hours (Requires urgent pickup)</option>
-                                <option value="3.5">Urgent: 3.5 Hours</option>
-                                <option value="5.0" selected>Standard: 5 Hours</option>
-                                <option value="8.0">Extended Cold Chain: 8 Hours</option>
+                                <option value="2.0" {% if form_data.get('safe_hours') == '2.0' %}selected{% endif %}>Critical: 2 Hours (Requires urgent pickup)</option>
+                                <option value="3.5" {% if form_data.get('safe_hours') == '3.5' %}selected{% endif %}>Urgent: 3.5 Hours</option>
+                                <option value="5.0" {% if form_data.get('safe_hours') == '5.0' or not form_data.get('safe_hours') %}selected{% endif %}>Standard: 5 Hours</option>
+                                <option value="8.0" {% if form_data.get('safe_hours') == '8.0' %}selected{% endif %}>Extended Cold Chain: 8 Hours</option>
                             </select>
+                            <div class="invalid-feedback">Please select safe consumption window.</div>
                         </div>
 
                         <div class="col-md-6">
                             <label class="form-label small fw-semibold">Holding Storage Temperature</label>
                             <select name="storage_temp" class="form-select">
-                                <option value="Hot (>60°C)" selected>Hot Holding (>60°C)</option>
-                                <option value="Chilled (<5°C)">Chilled Refrigerated (&lt;5°C)</option>
-                                <option value="Ambient Room Temp">Ambient Room Temperature</option>
+                                <option value="Hot (>60°C)" {% if form_data.get('storage_temp') == 'Hot (>60°C)' %}selected{% endif %}>Hot Holding (>60°C)</option>
+                                <option value="Chilled (<5°C)" {% if form_data.get('storage_temp') == 'Chilled (<5°C)' %}selected{% endif %}>Chilled Refrigerated (&lt;5°C)</option>
+                                <option value="Ambient Room Temp" {% if form_data.get('storage_temp') == 'Ambient Room Temp' %}selected{% endif %}>Ambient Room Temperature</option>
                             </select>
                         </div>
 
                         <div class="col-md-6">
                             <label class="form-label small fw-semibold">Packaging Type</label>
-                            <input type="text" name="packaging_type" class="form-control" value="Insulated Food-Grade Containers" required>
+                            <input type="text" name="packaging_type" class="form-control" value="{{ form_data.get('packaging_type', 'Insulated Food-Grade Containers') }}" required>
+                            <div class="invalid-feedback">Please specify packaging type.</div>
                         </div>
 
                         <div class="col-md-6">
                             <label class="form-label small fw-semibold">Dispatch Contact Phone</label>
-                            <input type="tel" name="contact_phone" class="form-control" value="{{ current_user.contact_phone or '+91 98765 43210' }}" required>
+                            <input type="tel" name="contact_phone" class="form-control" value="{{ form_data.get('contact_phone', current_user.contact_phone or '+91 98765 43210') }}" required>
+                            <div class="invalid-feedback">Please provide a contact phone number.</div>
+                        </div>
+
+                        <div class="col-md-6">
+                            <label class="form-label small fw-semibold">Pickup City (Auto-assigned from Profile)</label>
+                            <div class="input-group">
+                                <span class="input-group-text bg-light"><i class="bi bi-geo-alt-fill text-danger"></i></span>
+                                <input type="text" class="form-control bg-light" value="{{ current_user.city or 'Not Set' }}" readonly>
+                            </div>
+                            <div class="form-text text-muted" style="font-size: 0.75rem;">Assigned automatically from your profile. <a href="{{ url_for('auth.profile') }}">Edit Profile</a></div>
                         </div>
 
                         <div class="col-12">
                             <label class="form-label small fw-semibold">Pickup Location & Gate Instructions</label>
-                            <input type="text" name="pickup_address" class="form-control" value="{{ current_user.address or 'Campus Kitchen Loading Bay, Gate 3' }}" required>
+                            <input type="text" name="pickup_address" class="form-control" value="{{ form_data.get('pickup_address', current_user.address or 'Campus Kitchen Loading Bay, Gate 3') }}" required>
+                            <div class="invalid-feedback">Please provide pickup location instructions.</div>
                         </div>
 
                         <!-- FSSAI Food Safety Declaration -->
@@ -87,8 +104,9 @@
                                 <div class="form-check">
                                     <input class="form-check-input" type="checkbox" name="fssai_verified" id="fssai_check" checked required>
                                     <label class="form-check-label small" for="fssai_check">
-                                        <strong>Food Safety Declaration:</strong> I confirm this food is unserved, prepared in hygienic premises compliant with FSSAI/basic food safety standards, and stored safely for redistribution.
+                                        <strong>Food Safety Declaration (Mandatory):</strong> I confirm this food is safe, strictly unserved, prepared in hygienic premises compliant with FSSAI/basic food safety standards, and held at appropriate safe temperature. (Spoiled or contaminated waste cannot be broadcast).
                                     </label>
+                                    <div class="invalid-feedback">You must verify the food safety declaration before publishing.</div>
                                 </div>
                             </div>
                         </div>

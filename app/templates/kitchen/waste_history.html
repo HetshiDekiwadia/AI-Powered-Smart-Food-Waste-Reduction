@@ -52,7 +52,6 @@
                     <th>Food Item / Dish</th>
                     <th>Weight</th>
                     <th>Estimated Loss</th>
-                    <th>Root Cause Reason</th>
                 </tr>
             </thead>
             <tbody>
@@ -78,11 +77,10 @@
                     <td class="fw-semibold text-dark">{{ log.food_item }}</td>
                     <td class="fw-bold text-danger">{{ log.weight_kg }} kg</td>
                     <td class="fw-medium text-dark">₹{{ "{:,.2f}".format(log.estimated_cost_loss) }}</td>
-                    <td class="small text-muted">{{ log.reason or 'N/A' }}</td>
                 </tr>
                 {% else %}
                 <tr>
-                    <td colspan="7" class="text-center py-4 text-muted">No waste records found. Click 'New Waste Entry' to add one.</td>
+                    <td colspan="6" class="text-center py-4 text-muted">No waste records found for your kitchen. Click 'New Waste Entry' to add one.</td>
                 </tr>
                 {% endfor %}
             </tbody>

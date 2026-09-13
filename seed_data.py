@@ -7,6 +7,8 @@ from datetime import datetime, timezone, timedelta, date
 from app import create_app, db
 from app.models import User, WasteLog, InventoryItem, SurplusListing, Claim
 
+from app.services.ai_engine import calculate_waste_loss
+
 app = create_app()
 
 def seed():
@@ -16,29 +18,55 @@ def seed():
         db.create_all()
 
         print("Creating default personas...")
-        # 1. Kitchen Manager
+        # 1. Kitchen Manager (Primary demo + admin alias)
         kitchen_user = User(
             username='kitchen_demo',
             email='kitchen@apex.edu',
             role='kitchen_manager',
             organization_name='Apex University Central Mega-Mess',
             contact_phone='+91 98765 43210',
-            address='Campus Block B, Dining Complex, North Campus'
+            address='Campus Block B, Dining Complex, North Campus',
+            city='Delhi'
         )
         kitchen_user.set_password('demo1234')
         db.session.add(kitchen_user)
 
-        # 2. NGO Partner
+        admin_user = User(
+            username='admin',
+            email='admin@apex.edu',
+            role='kitchen_manager',
+            organization_name='Apex University Central Mega-Mess',
+            contact_phone='+91 98765 43210',
+            address='Campus Block B, Dining Complex, North Campus',
+            city='Delhi'
+        )
+        admin_user.set_password('admin123')
+        db.session.add(admin_user)
+
+        # 2. NGO Partner (Primary demo + feeding_india alias)
         ngo_user = User(
             username='ngo_demo',
             email='coordinator@annapurnarescue.org',
             role='ngo',
             organization_name='Annapurna Food Rescue Foundation',
             contact_phone='+91 98111 22334',
-            address='Unit 12, Community Relief Center, Civil Lines'
+            address='Unit 12, Community Relief Center, Civil Lines',
+            city='Delhi'
         )
         ngo_user.set_password('demo1234')
         db.session.add(ngo_user)
+
+        feeding_user = User(
+            username='feeding_india',
+            email='relief@feedingindia.org',
+            role='ngo',
+            organization_name='Annapurna Food Rescue Foundation',
+            contact_phone='+91 98111 22334',
+            address='Unit 12, Community Relief Center, Civil Lines',
+            city='Delhi'
+        )
+        feeding_user.set_password('ngo123')
+        db.session.add(feeding_user)
 
         db.session.commit()
 
@@ -69,18 +97,19 @@ def seed():
 
         print("Seeding past food waste logs...")
         waste_samples = [
-            (today - timedelta(days=4), "Breakfast", "Prep Waste", "Vegetable Peels & Trimmings", 6.2, "Standard peeling discard", 186.0),
-            (today - timedelta(days=4), "Lunch", "Plate Waste", "Leftover Rice & Sambhar", 14.5, "Over-serving portions on plate", 870.0),
-            (today - timedelta(days=3), "Lunch", "Buffet Leftover", "Cooked Mixed Veg Sabzi", 8.0, "Turnout 12% lower than expected", 520.0),
-            (today - timedelta(days=3), "Dinner", "Plate Waste", "Chapati & Dal Leftover", 11.3, "Late night student turnout drop", 678.0),
-            (today - timedelta(days=2), "Breakfast", "Spoilage", "Sour Milk Batch (3 pouches)", 6.0, "Chiller door left unsealed overnight", 384.0),
-            (today - timedelta(days=2), "Dinner", "Plate Waste", "Fried Rice & Manchurian", 13.8, "Students reported recipe over-salted", 897.0),
-            (today - timedelta(days=1), "Lunch", "Prep Waste", "Spinach stalks & damaged leaves", 4.5, "Bulk vendor sorting", 135.0),
-            (today - timedelta(days=1), "Dinner", "Buffet Leftover", "Surplus Rajma Masala", 7.2, "Rainy weather reduced day-scholar count", 468.0),
-            (today, "Lunch", "Plate Waste", "Plate Scraps & Rotis", 9.4, "Large single servings", 564.0),
+            (today - timedelta(days=4), "Breakfast", "Prep Waste", "Vegetable Peels & Trimmings", 6.2, "Standard peeling discard"),
+            (today - timedelta(days=4), "Lunch", "Plate Waste", "Leftover Rice & Sambhar", 14.5, "Over-serving portions on plate"),
+            (today - timedelta(days=3), "Lunch", "Buffet Leftover", "Cooked Mixed Veg Sabzi", 8.0, "Turnout 12% lower than expected"),
+            (today - timedelta(days=3), "Dinner", "Plate Waste", "Chapati & Dal Leftover", 11.3, "Late night student turnout drop"),
+            (today - timedelta(days=2), "Breakfast", "Spoilage", "Sour Milk Batch (3 pouches)", 6.0, "Chiller door left unsealed overnight"),
+            (today - timedelta(days=2), "Dinner", "Plate Waste", "Fried Rice & Manchurian", 13.8, "Students reported recipe over-salted"),
+            (today - timedelta(days=1), "Lunch", "Prep Waste", "Spinach stalks & damaged leaves", 4.5, "Bulk vendor sorting"),
+            (today - timedelta(days=1), "Dinner", "Buffet Leftover", "Surplus Rajma Masala", 7.2, "Rainy weather reduced day-scholar count"),
+            (today, "Lunch", "Plate Waste", "Plate Scraps & Rotis", 9.4, "Large single servings"),
         ]
 
-        for w_date, session, cat, food, kg, reason, cost in waste_samples:
+        for w_date, session, cat, food, kg, reason in waste_samples:
+            cost = calculate_waste_loss(kg, cat)
             log = WasteLog(
                 date=w_date,
                 meal_session=session,
@@ -107,6 +136,7 @@ def seed():
             packaging_type="Insulated Food-Grade Containers",
             storage_temp="Hot (>65°C)",
             pickup_address="Apex Mega-Mess, Gate 2 Kitchen Bay",
+            pickup_city="Delhi",
             contact_phone="+91 98765 43210",
             fssai_verified=True,
             status='Available',
@@ -125,6 +155,7 @@ def seed():
             packaging_type="Sealed Thermal Dispensers",
             storage_temp="Hot (>60°C)",
             pickup_address="Apex Mega-Mess, Gate 2 Kitchen Bay",
+            pickup_city="Delhi",
             contact_phone="+91 98765 43210",
             fssai_verified=True,
             status='Available',
@@ -143,6 +174,7 @@ def seed():
             packaging_type="Food Grade Foil Containers",
             storage_temp="Hot (>60°C)",
             pickup_address="Apex Mega-Mess, Gate 2 Kitchen Bay",
+            pickup_city="Delhi",
             contact_phone="+91 98765 43210",
             fssai_verified=True,
             status='Completed',
@@ -174,6 +206,7 @@ def seed():
             packaging_type="Insulated Food-Grade Containers",
             storage_temp="Hot (>60°C)",
             pickup_address="Apex Mega-Mess, Gate 2 Kitchen Bay",
+            pickup_city="Delhi",
             contact_phone="+91 98765 43210",
             fssai_verified=True,
             status='Completed',

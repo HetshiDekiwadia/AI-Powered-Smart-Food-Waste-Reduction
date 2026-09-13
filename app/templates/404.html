@@ -1,0 +1,27 @@
+{% extends "base.html" %}
+
+{% block title %}Page Not Found (404) - EcoPlate AI{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center align-items-center py-5" style="min-height: 60vh;">
+    <div class="col-md-7 col-lg-5 text-center">
+        <div class="p-4 p-md-5 bg-white rounded-4 shadow-sm border">
+            <div class="d-inline-flex p-3 rounded-circle bg-light text-warning mb-3">
+                <i class="bi bi-compass fs-1"></i>
+            </div>
+            <h2 class="fw-bold text-dark">404 - Resource Not Found</h2>
+            <p class="text-muted mb-4">
+                The page, food listing, or transaction ledger you are looking for does not exist or has been relocated.
+            </p>
+            <div class="d-flex justify-content-center gap-2">
+                <a href="{{ url_for('dashboard.index') }}" class="btn btn-ecogreen">
+                    <i class="bi bi-grid-1x2-fill me-1"></i> Return to Dashboard
+                </a>
+                <a href="{{ url_for('donation.marketplace') }}" class="btn btn-outline-secondary">
+                    <i class="bi bi-shop me-1"></i> Surplus Marketplace
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

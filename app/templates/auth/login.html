@@ -15,20 +15,47 @@
                     <p class="text-muted small">Sign in to your EcoPlate AI institutional dashboard</p>
                 </div>
 
-                <form method="POST" action="{{ url_for('auth.login') }}">
+                <form method="POST" action="{{ url_for('auth.login') }}" id="login_form" class="needs-validation" novalidate>
+                    <!-- Role Selection -->
+                    <div class="mb-4">
+                        <label class="form-label small fw-semibold text-muted text-uppercase mb-2 d-block">Select Ecosystem Role</label>
+                        <div class="row g-2">
+                            <div class="col-6">
+                                <input type="radio" class="btn-check" name="role" id="role_kitchen" value="kitchen_manager" {% if selected_role != 'ngo' %}checked{% endif %} required autocomplete="off">
+                                <label class="btn btn-outline-success w-100 py-2 d-flex flex-column align-items-center justify-content-center h-100" for="role_kitchen">
+                                    <i class="bi bi-buildings-fill fs-5 mb-1"></i>
+                                    <span class="fw-semibold small">Kitchen Manager</span>
+                                </label>
+                            </div>
+                            <div class="col-6">
+                                <input type="radio" class="btn-check" name="role" id="role_ngo" value="ngo" {% if selected_role == 'ngo' %}checked{% endif %} required autocomplete="off">
+                                <label class="btn btn-outline-primary w-100 py-2 d-flex flex-column align-items-center justify-content-center h-100" for="role_ngo">
+                                    <i class="bi bi-heart-pulse-fill fs-5 mb-1"></i>
+                                    <span class="fw-semibold small">NGO Partner</span>
+                                </label>
+                            </div>
+                        </div>
+                        <div class="invalid-feedback d-none" id="role_feedback">Please select your ecosystem role.</div>
+                    </div>
+
                     <div class="mb-3">
-                        <label class="form-label small fw-semibold">Username or Email</label>
+                        <label class="form-label small fw-semibold" for="login_username">Username or Email</label>
                         <div class="input-group">
                             <span class="input-group-text bg-light border-end-0"><i class="bi bi-person text-muted"></i></span>
-                            <input type="text" name="username" class="form-control border-start-0" placeholder="e.g. kitchen_demo or email" required>
+                            <input type="text" id="login_username" name="username" class="form-control border-start-0" placeholder="e.g. admin or email" value="{{ username|default('') }}" required autocomplete="username">
+                            <div class="invalid-feedback">Please enter your username or email address.</div>
                         </div>
                     </div>
 
                     <div class="mb-4">
-                        <label class="form-label small fw-semibold">Password</label>
+                        <label class="form-label small fw-semibold" for="login_password">Password</label>
                         <div class="input-group">
                             <span class="input-group-text bg-light border-end-0"><i class="bi bi-key text-muted"></i></span>
-                            <input type="password" name="password" class="form-control border-start-0" placeholder="••••••••" required>
+                            <input type="password" id="login_password" name="password" class="form-control border-start-0 border-end-0" placeholder="••••••••" required autocomplete="current-password">
+                            <button class="btn btn-outline-secondary border-start-0 bg-light toggle-password" type="button" data-target="#login_password" aria-label="Toggle password visibility" title="Show/Hide password">
+                                <i class="bi bi-eye text-muted"></i>
+                            </button>
+                            <div class="invalid-feedback">Please enter your password.</div>
                         </div>
                     </div>
 
@@ -37,20 +64,7 @@
                     </button>
                 </form>
 
-                <!-- One-Click Quick Login for SIH Presentation -->
-                <div class="pt-3 border-top text-center">
-                    <span class="badge bg-light text-secondary border px-3 py-2 text-uppercase mb-3">Quick Demo Personas</span>
-                    <div class="d-grid gap-2">
-                        <a href="{{ url_for('auth.demo_login', role='kitchen_manager') }}" class="btn btn-outline-success btn-sm text-start py-2">
-                            <i class="bi bi-buildings-fill me-2"></i> <strong>Kitchen Manager</strong> (Apex Mega-Mess)
-                        </a>
-                        <a href="{{ url_for('auth.demo_login', role='ngo') }}" class="btn btn-outline-primary btn-sm text-start py-2">
-                            <i class="bi bi-heart-pulse-fill me-2"></i> <strong>NGO Partner</strong> (Annapurna Relief)
-                        </a>
-                    </div>
-                </div>
-
-                <div class="text-center mt-4">
+                <div class="text-center mt-3 pt-3 border-top">
                     <p class="text-muted small mb-0">Don't have an account? <a href="{{ url_for('auth.register') }}" class="text-success fw-semibold">Register your unit</a></p>
                 </div>
             </div>

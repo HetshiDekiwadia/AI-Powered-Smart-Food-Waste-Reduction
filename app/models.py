@@ -18,12 +18,14 @@ class User(UserMixin, db.Model):
     organization_name = db.Column(db.String(120), nullable=False)
     contact_phone = db.Column(db.String(20), nullable=True)
     address = db.Column(db.String(255), nullable=True)
+    city = db.Column(db.String(64), nullable=True)
     created_at = db.Column(db.DateTime, default=lambda: datetime.now(timezone.utc))
 
     # Relationships
     waste_logs = db.relationship('WasteLog', backref='logger', lazy=True)
     surplus_listings = db.relationship('SurplusListing', backref='donor', lazy=True)
     claims = db.relationship('Claim', backref='claimant_ngo', lazy=True)
+    food_preparation_plans = db.relationship('FoodPreparationPlan', backref='planner', lazy=True)
 
     def set_password(self, password):
         self.password_hash = generate_password_hash(password)
@@ -93,6 +95,7 @@ class SurplusListing(db.Model):
     packaging_type = db.Column(db.String(50), nullable=False, default='Food-Grade Steel Containers')
     storage_temp = db.Column(db.String(32), nullable=False, default='Hot (>60°C)')
     pickup_address = db.Column(db.String(255), nullable=False)
+    pickup_city = db.Column(db.String(64), nullable=True)
     contact_phone = db.Column(db.String(20), nullable=False)
     fssai_verified = db.Column(db.Boolean, default=True)
     status = db.Column(db.String(32), default='Available') # Available, Claimed, Dispatched, Completed, Cancelled
@@ -119,3 +122,44 @@ class Claim(db.Model):
 
     def __repr__(self):
         return f'<Claim #{self.id} for Listing {self.listing_id}>'
+
+class FoodPreparationPlan(db.Model):
+    __tablename__ = 'food_preparation_plans'
+
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
+    predicted_attendance = db.Column(db.Integer, nullable=False)
+    safety_buffer = db.Column(db.Float, nullable=False)
+    meal_session = db.Column(db.String(32), nullable=False, default='Lunch')
+    created_at = db.Column(db.DateTime, default=lambda: datetime.now(timezone.utc))
+
+    items = db.relationship('FoodPreparationItem', backref='plan', lazy=True, cascade="all, delete-orphan")
+
+    def __repr__(self):
+        return f'<FoodPreparationPlan #{self.id} for {self.predicted_attendance} diners (Buffer: {self.safety_buffer}%)>'
+
+class FoodPreparationItem(db.Model):
+    __tablename__ = 'food_preparation_items'
+
+    id = db.Column(db.Integer, primary_key=True)
+    plan_id = db.Column(db.Integer, db.ForeignKey('food_preparation_plans.id'), nullable=False)
+    food_name = db.Column(db.String(120), nullable=False)
+    unit = db.Column(db.String(20), nullable=False)
+    quantity_per_person = db.Column(db.Float, nullable=False)
+    recommended_quantity = db.Column(db.Float, nullable=False)
+    created_at = db.Column(db.DateTime, default=lambda: datetime.now(timezone.utc))
+
+    @property
+    def estimated_quantity(self):
+        return self.recommended_quantity
+
+    @property
+    def estimated_unit(self):
+        return self.unit
+
+    @property
+    def serving_benchmark(self):
+        return self.quantity_per_person
+
+    def __repr__(self):
+        return f'<FoodPreparationItem {self.food_name}: {self.recommended_quantity} {self.unit}>'

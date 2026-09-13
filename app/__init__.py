@@ -35,4 +35,23 @@ def create_app(config_class=Config):
     app.register_blueprint(donation_bp, url_prefix='/donation')
     app.register_blueprint(dashboard_bp)
 
+    @app.after_request
+    def set_cache_headers(response):
+        # Prevent browser bfcache from showing stale authenticated data after logout
+        if response.content_type and 'text/html' in response.content_type:
+            response.headers['Cache-Control'] = 'no-cache, no-store, must-revalidate, max-age=0'
+            response.headers['Pragma'] = 'no-cache'
+            response.headers['Expires'] = '0'
+        return response
+
+    from flask import render_template
+
+    @app.errorhandler(404)
+    def page_not_found(e):
+        return render_template('404.html'), 404
+
+    @app.errorhandler(500)
+    def internal_server_error(e):
+        return render_template('500.html'), 500
+
     return app

@@ -38,10 +38,16 @@
                             <i class="bi bi-grid-1x2-fill me-1"></i> Dashboard
                         </a>
                     </li>
-                    <li class="nav-item">
-                        <a class="nav-link text-light {% if 'kitchen.log_waste' in request.endpoint or 'kitchen.waste_history' in request.endpoint %}active{% endif %}" href="{{ url_for('kitchen.log_waste') }}">
+                    {% if current_user.role == 'kitchen_manager' %}
+                    <!-- Kitchen Manager Dedicated Navigation -->
+                    <li class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle text-light {% if request.endpoint and ('kitchen.log_waste' in request.endpoint or 'kitchen.waste_history' in request.endpoint) %}active{% endif %}" href="#" id="wasteLogDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
                             <i class="bi bi-trash3-fill me-1"></i> Waste Log
                         </a>
+                        <ul class="dropdown-menu shadow border-0" aria-labelledby="wasteLogDropdown">
+                            <li><a class="dropdown-item py-2" href="{{ url_for('kitchen.log_waste') }}"><i class="bi bi-plus-circle me-2 text-success"></i> New Waste Entry</a></li>
+                            <li><a class="dropdown-item py-2" href="{{ url_for('kitchen.waste_history') }}"><i class="bi bi-clock-history me-2 text-primary"></i> Waste Log History</a></li>
+                        </ul>
                     </li>
                     <li class="nav-item">
                         <a class="nav-link text-light {% if request.endpoint == 'kitchen.inventory' %}active{% endif %}" href="{{ url_for('kitchen.inventory') }}">
@@ -54,14 +60,14 @@
                         </a>
                     </li>
                     <li class="nav-item dropdown">
-                        <a class="nav-link dropdown-toggle text-light" href="#" role="button" data-bs-toggle="dropdown">
+                        <a class="nav-link dropdown-toggle text-light {% if request.endpoint and 'donation.' in request.endpoint %}active{% endif %}" href="#" role="button" data-bs-toggle="dropdown">
                             <i class="bi bi-heart-fill text-danger me-1"></i> Redistribution
                         </a>
                         <ul class="dropdown-menu shadow border-0">
                             <li><a class="dropdown-item py-2" href="{{ url_for('donation.list_surplus') }}"><i class="bi bi-broadcast me-2 text-success"></i> Broadcast Surplus Food</a></li>
                             <li><a class="dropdown-item py-2" href="{{ url_for('donation.marketplace') }}"><i class="bi bi-shop me-2 text-primary"></i> Live Surplus Marketplace</a></li>
                             <li><hr class="dropdown-divider"></li>
-                            <li><a class="dropdown-item py-2" href="{{ url_for('donation.tracking') }}"><i class="bi bi-truck me-2 text-secondary"></i> Claims & Dispatch Tracking</a></li>
+                            <li><a class="dropdown-item py-2" href="{{ url_for('donation.tracking') }}"><i class="bi bi-truck me-2 text-secondary"></i> Claims & Delivery Verification</a></li>
                         </ul>
                     </li>
                     <li class="nav-item">
@@ -69,19 +75,41 @@
                             <i class="bi bi-file-earmark-bar-graph me-1"></i> ESG Report
                         </a>
                     </li>
+                    {% elif current_user.role == 'ngo' %}
+                    <!-- NGO Relief Partner Dedicated Navigation -->
+                    <li class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle text-light {% if request.endpoint and 'donation.' in request.endpoint %}active{% endif %}" href="#" role="button" data-bs-toggle="dropdown">
+                            <i class="bi bi-heart-fill text-danger me-1"></i> Redistribution
+                        </a>
+                        <ul class="dropdown-menu shadow border-0">
+                            <li><a class="dropdown-item py-2" href="{{ url_for('donation.marketplace') }}"><i class="bi bi-shop me-2 text-primary"></i> Live Surplus Marketplace</a></li>
+                            <li><a class="dropdown-item py-2" href="{{ url_for('donation.tracking') }}"><i class="bi bi-truck me-2 text-secondary"></i> My Claims & Dispatch Tracking</a></li>
+                        </ul>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link text-light {% if request.endpoint == 'auth.profile' %}active{% endif %}" href="{{ url_for('auth.profile') }}">
+                            <i class="bi bi-building me-1"></i> Profile / Organization
+                        </a>
+                    </li>
+                    {% endif %}
                 </ul>
 
-                <!-- User Persona and Quick Demo Switcher -->
+                <!-- User Persona, Profile and Quick Demo Switcher -->
                 <div class="d-flex align-items-center gap-3 mt-3 mt-lg-0">
-                    <!-- Quick Switcher Dropdown for Presentation / Judges -->
                     <div class="dropdown">
                         <button class="btn btn-sm btn-outline-light dropdown-toggle d-flex align-items-center gap-1" type="button" data-bs-toggle="dropdown">
                             <span class="badge {% if current_user.role == 'kitchen_manager' %}bg-success{% else %}bg-primary{% endif %} me-1">
                                 {{ 'Kitchen Manager' if current_user.role == 'kitchen_manager' else 'NGO Relief Partner' }}
                             </span>
-                            <span class="small d-none d-md-inline">{{ current_user.organization_name[:22] }}</span>
+                            <span class="small d-none d-md-inline text-truncate" style="max-width: 220px;" title="{{ current_user.organization_name }}">{{ current_user.organization_name }}</span>
                         </button>
                         <ul class="dropdown-menu dropdown-menu-end shadow border-0">
+                            <li>
+                                <a class="dropdown-item" href="{{ url_for('auth.profile') }}">
+                                    <i class="bi bi-person-circle me-2 text-secondary"></i> Profile / Organization
+                                </a>
+                            </li>
+                            <li><hr class="dropdown-divider"></li>
                             <li class="dropdown-header text-uppercase small fw-bold">SIH Demo Persona Switcher</li>
                             <li>
                                 <a class="dropdown-item d-flex align-items-center justify-content-between" href="{{ url_for('auth.demo_login', role='kitchen_manager') }}">
@@ -156,8 +184,8 @@
 
     <!-- Bootstrap JS Bundle -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
-    <script src="{{ url_for('static', filename='js/main.js') }}"></script>
-    <script src="{{ url_for('static', filename='js/charts.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/main.js') }}?v=1.1"></script>
+    <script src="{{ url_for('static', filename='js/charts.js') }}?v=1.1"></script>
     {% block scripts %}{% endblock %}
 </body>
 </html>

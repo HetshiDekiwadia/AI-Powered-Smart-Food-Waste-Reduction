@@ -125,7 +125,7 @@
                         </div>
                     </div>
                     <span class="badge bg-success fs-6 px-3 py-2">
-                        -{{ ((pred.portions_saved / pred.traditional_prep_portions) * 100)|round(1) }}% Overproduction
+                        -{{ ((pred.portions_saved / pred.traditional_prep_portions * 100)|round(1)) if pred.traditional_prep_portions > 0 else 0.0 }}% Overproduction
                     </span>
                 </div>
 
@@ -151,24 +151,304 @@
         </div>
     </div>
 </div>
+
+<!-- ============================================================ -->
+<!-- 4. NEW SECTION: Food-wise Preparation Plan & Estimate Results -->
+<!-- ============================================================ -->
+<div class="row g-4 mt-2" id="foodWiseSection">
+    <!-- Simplified Food-wise Preparation Plan Entry Card -->
+    <div class="col-lg-6">
+        <div class="card eco-card shadow-sm border-0 h-100">
+            <div class="card-header card-header-clean bg-light d-flex justify-content-between align-items-center">
+                <span class="fw-bold"><i class="bi bi-card-checklist text-success me-2"></i> Food-wise Preparation Plan</span>
+                <span class="badge bg-success bg-opacity-10 text-success border border-success border-opacity-25">
+                    <i class="bi bi-link-45deg me-1"></i> Linked to Active AI Forecast
+                </span>
+            </div>
+            <div class="card-body p-4">
+                <p class="text-muted small mb-3">
+                    EcoPlate AI first predicts the expected number of diners. Based on the actual menu entered by the kitchen, the system automatically estimates the required quantity of each food item using food-specific serving benchmarks and the selected safety buffer.
+                </p>
+
+                <form method="POST" action="{{ url_for('ai.create_food_plan') }}" id="foodPlanForm">
+                    <!-- Context Parameters from Active Forecast -->
+                    <input type="hidden" name="predicted_attendance" id="foodPlanAttendance" value="{{ pred.predicted_headcount }}">
+                    <input type="hidden" name="safety_buffer" id="foodPlanBuffer" value="{{ pred.buffer_percent_used }}">
+                    <input type="hidden" name="capacity" value="{{ capacity }}">
+                    <input type="hidden" name="meal_session" value="{{ meal_session }}">
+                    <input type="hidden" name="day_of_week" value="{{ day_of_week }}">
+                    <input type="hidden" name="event_type" value="{{ event_type }}">
+
+                    <!-- Attendance & Buffer Context Readout -->
+                    <div class="d-flex flex-wrap gap-3 p-2 px-3 bg-light rounded-3 border mb-3">
+                        <div>
+                            <span class="small text-muted text-uppercase fw-bold d-block" style="font-size: 0.75rem;">Predicted Attendance</span>
+                            <span class="fw-bold text-dark fs-5">{{ pred.predicted_headcount }}</span> <small class="text-muted">diners</small>
+                        </div>
+                        <div class="border-start ps-3">
+                            <span class="small text-muted text-uppercase fw-bold d-block" style="font-size: 0.75rem;">Safety Buffer</span>
+                            <span class="fw-bold text-success fs-5">+{{ pred.buffer_percent_used }}%</span>
+                        </div>
+                        <div class="border-start ps-3">
+                            <span class="small text-muted text-uppercase fw-bold d-block" style="font-size: 0.75rem;">Session</span>
+                            <span class="badge bg-secondary mt-1">{{ meal_session }}</span>
+                        </div>
+                    </div>
+
+                    <label class="form-label small fw-semibold mb-2">Enter today's menu items:</label>
+                    
+                    <!-- Simplified Menu Items Container -->
+                    <div id="menuItemsContainer" class="d-flex flex-column gap-2 mb-3">
+                        <div class="input-group menu-item-row">
+                            <span class="input-group-text bg-light text-muted"><i class="bi bi-egg-fried"></i></span>
+                            <input type="text" name="food_name[]" class="form-control food-name-input" placeholder="e.g. Rice" value="Rice" required maxlength="120">
+                            <button type="button" class="btn btn-outline-danger remove-row-btn" title="Delete"><i class="bi bi-trash"></i></button>
+                        </div>
+                        <div class="input-group menu-item-row">
+                            <span class="input-group-text bg-light text-muted"><i class="bi bi-egg-fried"></i></span>
+                            <input type="text" name="food_name[]" class="form-control food-name-input" placeholder="e.g. Dal" value="Dal" required maxlength="120">
+                            <button type="button" class="btn btn-outline-danger remove-row-btn" title="Delete"><i class="bi bi-trash"></i></button>
+                        </div>
+                        <div class="input-group menu-item-row">
+                            <span class="input-group-text bg-light text-muted"><i class="bi bi-egg-fried"></i></span>
+                            <input type="text" name="food_name[]" class="form-control food-name-input" placeholder="e.g. Vegetable Sabji" value="Vegetable Sabji" required maxlength="120">
+                            <button type="button" class="btn btn-outline-danger remove-row-btn" title="Delete"><i class="bi bi-trash"></i></button>
+                        </div>
+                    </div>
+
+                    <div class="d-flex flex-column flex-sm-row justify-content-between align-items-sm-center gap-2">
+                        <button type="button" class="btn btn-outline-secondary btn-sm" id="addMenuItemBtn">
+                            <i class="bi bi-plus-circle me-1"></i> Add Food Item
+                        </button>
+                        <button type="submit" class="btn btn-ecogreen py-2 px-4 fw-semibold" id="generateEstimateBtn">
+                            <i class="bi bi-calculator me-1"></i> Generate Food-wise Estimate
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Right Side: Estimate Result Display -->
+    <div class="col-lg-6">
+        {% if active_plan %}
+        <div class="card eco-card shadow-sm border-0 mb-4 border-success border-opacity-25" id="activeEstimateResultCard">
+            <div class="card-header card-header-clean bg-success bg-opacity-10 d-flex justify-content-between align-items-center">
+                <span class="fw-bold text-success"><i class="bi bi-check2-circle me-2"></i> AI Food-wise Preparation Recommendation</span>
+                <span class="badge bg-success">Plan #{{ active_plan.id }}</span>
+            </div>
+            <div class="card-body p-4">
+                <div class="p-2 px-3 bg-light rounded-3 border mb-3">
+                    <div class="row g-2 text-center">
+                        <div class="col-6 border-end">
+                            <span class="small text-muted d-block text-uppercase fw-bold" style="font-size: 0.75rem;">Predicted Attendance</span>
+                            <span class="fs-5 fw-bold text-dark">{{ active_plan.predicted_attendance }} diners</span>
+                        </div>
+                        <div class="col-6">
+                            <span class="small text-muted d-block text-uppercase fw-bold" style="font-size: 0.75rem;">Safety Buffer</span>
+                            <span class="fs-5 fw-bold text-success">+{{ active_plan.safety_buffer }}%</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="table-responsive mb-0">
+                    <table class="table table-bordered table-hover align-middle mb-0">
+                        <thead class="table-light">
+                            <tr class="small text-uppercase">
+                                <th style="width: 55%;">Food Item</th>
+                                <th class="text-end" style="width: 45%;">Estimated Quantity</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for item in active_plan.items %}
+                            <tr>
+                                <td class="fw-semibold text-dark">{{ item.food_name }}</td>
+                                <td class="text-end fw-bold text-success fs-6">
+                                    {{ "{:,.0f}".format(item.estimated_quantity) if (item.estimated_quantity >= 1.0 or item.estimated_unit == 'pieces') else "{:,.1f}".format(item.estimated_quantity) }} {{ item.estimated_unit }}
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+        {% else %}
+        <div class="card eco-card shadow-sm border-0 mb-4 h-100 d-flex justify-content-center align-items-center text-center p-4 text-muted bg-light">
+            <div class="py-5">
+                <i class="bi bi-egg-fried display-3 text-secondary opacity-50 mb-3 d-block"></i>
+                <h6 class="fw-bold text-secondary">No Active Food-wise Plan Selected</h6>
+                <p class="small text-muted mb-0" style="max-width: 320px;">
+                    Enter your menu items on the left and click <strong>Generate Food-wise Estimate</strong> to see dynamic batch preparation recommendations.
+                </p>
+            </div>
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+<!-- ============================================================ -->
+<!-- 5. Previous Food-wise Plans Section                         -->
+<!-- ============================================================ -->
+{% if saved_plans %}
+<div class="row g-4 mt-2">
+    <div class="col-12">
+        <div class="card eco-card shadow-sm border-0">
+            <div class="card-header card-header-clean bg-light d-flex justify-content-between align-items-center">
+                <span class="fw-bold"><i class="bi bi-clock-history text-primary me-2"></i> Previous Food-wise Preparation Plans</span>
+                <span class="badge bg-secondary">{{ saved_plans|length }} Saved Record{{ 's' if saved_plans|length > 1 else '' }}</span>
+            </div>
+            <div class="card-body p-4">
+                <div class="table-responsive">
+                    <table class="table table-hover align-middle mb-0">
+                        <thead class="table-light small text-uppercase">
+                            <tr>
+                                <th>Plan ID</th>
+                                <th>Session &amp; Generated Time</th>
+                                <th>Attendance &amp; Buffer</th>
+                                <th>Menu Breakdown</th>
+                                <th class="text-end">Action</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for sp in saved_plans %}
+                            <tr {% if active_plan and active_plan.id == sp.id %}class="table-success bg-opacity-25"{% endif %}>
+                                <td class="fw-bold text-muted">#{{ sp.id }}</td>
+                                <td>
+                                    <span class="badge bg-primary me-1">{{ sp.meal_session }}</span>
+                                    <small class="text-muted">{{ sp.created_at.strftime('%d %b %Y, %I:%M %p') }}</small>
+                                </td>
+                                <td>
+                                    <span class="fw-semibold">{{ sp.predicted_attendance }} diners</span>
+                                    <small class="text-muted">(+{{ sp.safety_buffer }}% buffer)</small>
+                                </td>
+                                <td>
+                                    <div class="small">
+                                        {% for it in sp.items %}
+                                        <span class="badge bg-light text-dark border me-1 mb-1">
+                                            {{ it.food_name }}: {{ "{:,.0f}".format(it.estimated_quantity) if (it.estimated_quantity >= 1.0 or it.estimated_unit == 'pieces') else "{:,.1f}".format(it.estimated_quantity) }} {{ it.estimated_unit }}
+                                        </span>
+                                        {% endfor %}
+                                    </div>
+                                </td>
+                                <td class="text-end">
+                                    <a href="{{ url_for('ai.view_food_plan', plan_id=sp.id) }}" class="btn btn-sm btn-outline-primary">
+                                        <i class="bi bi-eye me-1"></i> View Plan
+                                    </a>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endif %}
 {% endblock %}
 
 {% block scripts %}
 <script>
     document.addEventListener('DOMContentLoaded', () => {
-        // Slider live label
+        // Slider live label and synchronization with food plan hidden buffer
         const slider = document.getElementById('buffer_percent');
         const display = document.getElementById('bufferDisplay');
+        const foodPlanBuffer = document.getElementById('foodPlanBuffer');
         if (slider && display) {
             slider.addEventListener('input', (e) => {
                 display.textContent = `${e.target.value}%`;
+                if (foodPlanBuffer) {
+                    foodPlanBuffer.value = e.target.value;
+                }
             });
         }
 
         // Initialize Comparison Bar Chart
         const traditionalKg = {{ pred.food_kg_traditional }};
         const optimizedKg = {{ pred.food_kg_required }};
-        initForecastComparisonChart('forecastComparisonChart', traditionalKg, optimizedKg);
+        const traditionalPortions = {{ pred.traditional_prep_portions }};
+        const optimizedPortions = {{ pred.optimized_prep_portions }};
+        initForecastComparisonChart('forecastComparisonChart', traditionalKg, optimizedKg, traditionalPortions, optimizedPortions);
+
+        // Simplified Dynamic Menu Items Handler
+        const menuContainer = document.getElementById('menuItemsContainer');
+        const addBtn = document.getElementById('addMenuItemBtn');
+
+        function attachRemoveHandlers() {
+            document.querySelectorAll('.remove-row-btn').forEach(btn => {
+                btn.onclick = function() {
+                    const rows = menuContainer.querySelectorAll('.menu-item-row');
+                    if (rows.length > 1) {
+                        this.closest('.menu-item-row').remove();
+                    } else {
+                        // Clear the single row to preserve UI
+                        this.closest('.menu-item-row').querySelector('.food-name-input').value = '';
+                    }
+                };
+            });
+        }
+        attachRemoveHandlers();
+
+        if (addBtn && menuContainer) {
+            addBtn.addEventListener('click', () => {
+                const rowDiv = document.createElement('div');
+                rowDiv.className = 'input-group menu-item-row';
+                rowDiv.innerHTML = `
+                    <span class="input-group-text bg-light text-muted"><i class="bi bi-egg-fried"></i></span>
+                    <input type="text" name="food_name[]" class="form-control food-name-input" placeholder="e.g. Roti, Salad, Curd" required maxlength="120">
+                    <button type="button" class="btn btn-outline-danger remove-row-btn" title="Delete"><i class="bi bi-trash"></i></button>
+                `;
+                menuContainer.appendChild(rowDiv);
+                attachRemoveHandlers();
+                rowDiv.querySelector('.food-name-input').focus();
+            });
+        }
+
+        // Client-side Form Validation Guard
+        const foodPlanForm = document.getElementById('foodPlanForm');
+        if (foodPlanForm) {
+            foodPlanForm.addEventListener('submit', (e) => {
+                const nameInputs = menuContainer.querySelectorAll('.food-name-input');
+                let validCount = 0;
+                const seenFoods = new Set();
+
+                for (let i = 0; i < nameInputs.length; i++) {
+                    const input = nameInputs[i];
+                    const name = input.value.trim();
+
+                    if (!name) {
+                        if (nameInputs.length > 1) continue;
+                        alert('Please enter at least one food item name.');
+                        input.focus();
+                        e.preventDefault();
+                        return;
+                    }
+
+                    if (name.length < 2) {
+                        alert(`Food item "${name}" must be at least 2 characters long.`);
+                        input.focus();
+                        e.preventDefault();
+                        return;
+                    }
+
+                    const lowerName = name.toLowerCase();
+                    if (seenFoods.has(lowerName)) {
+                        alert(`Duplicate food item detected: "${name}". Please consolidate menu items.`);
+                        input.focus();
+                        e.preventDefault();
+                        return;
+                    }
+                    seenFoods.add(lowerName);
+                    validCount++;
+                }
+
+                if (validCount === 0) {
+                    alert('Please enter at least one food item name.');
+                    e.preventDefault();
+                }
+            });
+        }
     });
 </script>
 {% endblock %}

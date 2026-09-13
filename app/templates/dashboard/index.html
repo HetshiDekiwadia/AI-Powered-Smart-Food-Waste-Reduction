@@ -12,9 +12,24 @@
             </span>
             <h2 class="fw-bold mb-2">Welcome, {{ current_user.organization_name }}</h2>
             <p class="text-light opacity-75 mb-3 lead fs-6">
+                {% if current_user.role == 'ngo' %}
+                NGO & Relief Partner Operational Hub &bull; Connecting community kitchens with surplus donors to prevent hunger and eliminate food waste.
+                {% else %}
                 Smart Food Waste Reduction and Sustainable Redistribution Ecosystem for Institutional Kitchens and Food Processing Units.
+                {% endif %}
             </p>
             <div class="d-flex flex-wrap gap-2">
+                {% if current_user.role == 'ngo' %}
+                <a href="{{ url_for('donation.marketplace') }}" class="btn btn-ecogreen btn-sm">
+                    <i class="bi bi-shop me-1"></i> Live Surplus Marketplace
+                </a>
+                <a href="{{ url_for('donation.tracking') }}" class="btn btn-outline-light btn-sm">
+                    <i class="bi bi-truck me-1"></i> Claims & Dispatch Tracking
+                </a>
+                <a href="{{ url_for('dashboard.esg_report') }}" class="btn btn-warning btn-sm text-dark fw-bold">
+                    <i class="bi bi-file-earmark-bar-graph me-1"></i> ESG Impact Audit
+                </a>
+                {% else %}
                 <a href="{{ url_for('kitchen.log_waste') }}" class="btn btn-ecogreen btn-sm">
                     <i class="bi bi-plus-circle me-1"></i> Log Food Waste
                 </a>
@@ -24,6 +39,7 @@
                 <a href="{{ url_for('ai.forecast') }}" class="btn btn-warning btn-sm text-dark fw-bold">
                     <i class="bi bi-cpu-fill me-1"></i> AI Demand Forecast
                 </a>
+                {% endif %}
             </div>
         </div>
         <div class="col-lg-4 d-none d-lg-block text-end pe-4">

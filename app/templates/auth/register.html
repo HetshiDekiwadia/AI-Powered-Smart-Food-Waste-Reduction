@@ -15,41 +15,58 @@
                     <p class="text-muted small">Join the institutional food waste reduction and redistribution network</p>
                 </div>
 
-                <form method="POST" action="{{ url_for('auth.register') }}">
+                <form method="POST" action="{{ url_for('auth.register') }}" id="register_form" class="needs-validation" novalidate>
                     <div class="row g-3">
                         <div class="col-md-6">
-                            <label class="form-label small fw-semibold">Username</label>
-                            <input type="text" name="username" class="form-control" placeholder="e.g. cafeteria_admin" required>
+                            <label class="form-label small fw-semibold" for="reg_username">Username</label>
+                            <input type="text" id="reg_username" name="username" class="form-control" placeholder="e.g. cafeteria_admin" value="{{ form_data.get('username', '') }}" minlength="3" required autocomplete="username">
+                            <div class="invalid-feedback">Username must be at least 3 characters.</div>
                         </div>
                         <div class="col-md-6">
-                            <label class="form-label small fw-semibold">Email Address</label>
-                            <input type="email" name="email" class="form-control" placeholder="admin@organization.edu" required>
+                            <label class="form-label small fw-semibold" for="reg_email">Email Address</label>
+                            <input type="email" id="reg_email" name="email" class="form-control" placeholder="admin@organization.edu" value="{{ form_data.get('email', '') }}" required autocomplete="email">
+                            <div class="invalid-feedback">Please enter a valid institutional email.</div>
                         </div>
 
                         <div class="col-md-6">
-                            <label class="form-label small fw-semibold">Password</label>
-                            <input type="password" name="password" class="form-control" placeholder="••••••••" required>
+                            <label class="form-label small fw-semibold" for="register_password">Password (min. 6 characters)</label>
+                            <div class="input-group">
+                                <input type="password" id="register_password" name="password" class="form-control border-end-0" placeholder="••••••••" minlength="6" required autocomplete="new-password">
+                                <button class="btn btn-outline-secondary border-start-0 bg-light toggle-password" type="button" data-target="#register_password" aria-label="Toggle password visibility" title="Show/Hide password">
+                                    <i class="bi bi-eye text-muted"></i>
+                                </button>
+                                <div class="invalid-feedback">Password must be at least 6 characters.</div>
+                            </div>
                         </div>
                         <div class="col-md-6">
-                            <label class="form-label small fw-semibold">Ecosystem Role</label>
-                            <select name="role" class="form-select" required>
-                                <option value="kitchen_manager">Institutional Kitchen / Mess / Processor</option>
-                                <option value="ngo">NGO / Relief Organization / Community Kitchen</option>
+                            <label class="form-label small fw-semibold" for="reg_role">Ecosystem Role</label>
+                            <select id="reg_role" name="role" class="form-select" required>
+                                <option value="kitchen_manager" {% if form_data.get('role') != 'ngo' %}selected{% endif %}>Institutional Kitchen / Mess / Processor</option>
+                                <option value="ngo" {% if form_data.get('role') == 'ngo' %}selected{% endif %}>NGO / Relief Organization / Community Kitchen</option>
                             </select>
                         </div>
 
                         <div class="col-12">
-                            <label class="form-label small fw-semibold">Organization / Kitchen Name</label>
-                            <input type="text" name="organization_name" class="form-control" placeholder="e.g. Apex Central Mess or Robin Hood Army Chapter" required>
+                            <label class="form-label small fw-semibold" for="reg_org">Organization / Kitchen Name</label>
+                            <input type="text" id="reg_org" name="organization_name" class="form-control" placeholder="e.g. Apex Central Mess or Robin Hood Army Chapter" value="{{ form_data.get('organization_name', '') }}" required>
+                            <div class="invalid-feedback">Organization or kitchen name is required.</div>
                         </div>
 
                         <div class="col-md-6">
-                            <label class="form-label small fw-semibold">Contact Phone</label>
-                            <input type="tel" name="contact_phone" class="form-control" placeholder="+91 98765 43210" required>
+                            <label class="form-label small fw-semibold" for="reg_city">Operating City</label>
+                            <input type="text" id="reg_city" name="city" class="form-control" placeholder="e.g. Rajkot, Delhi, Mumbai" value="{{ form_data.get('city', '') }}" minlength="2" maxlength="64" required>
+                            <div class="form-text text-muted" style="font-size: 0.75rem;">Used for hyper-local surplus matching &amp; pickup claims.</div>
+                            <div class="invalid-feedback">Operating City is required (2–64 characters).</div>
                         </div>
                         <div class="col-md-6">
-                            <label class="form-label small fw-semibold">Physical Location / Address</label>
-                            <input type="text" name="address" class="form-control" placeholder="Campus Dining Hall, Sector 12" required>
+                            <label class="form-label small fw-semibold" for="reg_phone">Contact Phone</label>
+                            <input type="tel" id="reg_phone" name="contact_phone" class="form-control" placeholder="+91 98765 43210" value="{{ form_data.get('contact_phone', '') }}" required>
+                            <div class="invalid-feedback">Contact phone number is required.</div>
+                        </div>
+                        <div class="col-12">
+                            <label class="form-label small fw-semibold" for="reg_address">Physical Location / Operating Address</label>
+                            <input type="text" id="reg_address" name="address" class="form-control" placeholder="Campus Dining Hall, Sector 12" value="{{ form_data.get('address', '') }}" required>
+                            <div class="invalid-feedback">Physical address is required for dispatch/collection.</div>
                         </div>
 
                         <div class="col-12 mt-4">

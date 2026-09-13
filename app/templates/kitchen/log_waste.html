@@ -16,42 +16,47 @@
                 </a>
             </div>
             <div class="card-body p-4">
-                <form method="POST" action="{{ url_for('kitchen.log_waste') }}">
+                <form method="POST" action="{{ url_for('kitchen.log_waste') }}" id="log_waste_form" class="needs-validation" novalidate>
                     <div class="row g-3">
                         <div class="col-md-6">
                             <label class="form-label small fw-semibold">Entry Date</label>
-                            <input type="date" name="date" class="form-control" value="{{ today_str }}" required>
+                            <input type="date" name="date" class="form-control" value="{{ form_data.date|default(today_str) }}" required>
+                            <div class="invalid-feedback">Please select a valid date.</div>
                         </div>
                         <div class="col-md-6">
                             <label class="form-label small fw-semibold">Meal Session</label>
                             <select name="meal_session" class="form-select" required>
-                                <option value="Lunch" selected>Lunch</option>
-                                <option value="Dinner">Dinner</option>
-                                <option value="Breakfast">Breakfast</option>
-                                <option value="Snacks">Evening Snacks</option>
+                                <option value="Lunch" {% if form_data.meal_session == 'Lunch' %}selected{% endif %}>Lunch</option>
+                                <option value="Dinner" {% if form_data.meal_session == 'Dinner' %}selected{% endif %}>Dinner</option>
+                                <option value="Breakfast" {% if form_data.meal_session == 'Breakfast' %}selected{% endif %}>Breakfast</option>
+                                <option value="Snacks" {% if form_data.meal_session == 'Snacks' %}selected{% endif %}>Evening Snacks</option>
                             </select>
+                            <div class="invalid-feedback">Please select the meal session.</div>
                         </div>
 
                         <div class="col-md-6">
                             <label class="form-label small fw-semibold">Waste Category / Stream</label>
                             <select name="waste_category" id="waste_category" class="form-select" required>
-                                <option value="Plate Waste" selected>Plate Waste (Left on dining plates by consumers)</option>
-                                <option value="Prep Waste">Preparation Waste (Vegetable skins, stems, trimmings)</option>
-                                <option value="Buffet Leftover">Buffet / Service Leftover (Excess cooked unserved food)</option>
-                                <option value="Spoilage">Spoilage (Storage deterioration, expired raw goods)</option>
+                                <option value="Plate Waste" {% if form_data.waste_category == 'Plate Waste' %}selected{% endif %}>Plate Waste (Left on dining plates by consumers)</option>
+                                <option value="Prep Waste" {% if form_data.waste_category == 'Prep Waste' %}selected{% endif %}>Preparation Waste (Vegetable skins, stems, trimmings)</option>
+                                <option value="Buffet Leftover" {% if form_data.waste_category == 'Buffet Leftover' %}selected{% endif %}>Buffet / Service Leftover (Excess cooked unserved food)</option>
+                                <option value="Spoilage" {% if form_data.waste_category == 'Spoilage' %}selected{% endif %}>Spoilage (Storage deterioration, expired raw goods)</option>
                             </select>
+                            <div class="invalid-feedback">Please select the waste stream category.</div>
                         </div>
 
                         <div class="col-md-6">
                             <label class="form-label small fw-semibold">Specific Food Item or Dish</label>
-                            <input type="text" name="food_item" class="form-control" placeholder="e.g. Cooked Rice & Dal, Mixed Veg, Rotis" required>
+                            <input type="text" name="food_item" class="form-control" placeholder="e.g. Cooked Rice & Dal, Mixed Veg, Rotis" value="{{ form_data.food_item|default('') }}" required minlength="2">
+                            <div class="invalid-feedback">Please specify the dish or food item name.</div>
                         </div>
 
                         <div class="col-md-6">
                             <label class="form-label small fw-semibold">Measured Waste Weight (Kilograms)</label>
                             <div class="input-group">
-                                <input type="number" step="0.1" min="0.1" name="weight_kg" id="weight_kg" class="form-control" placeholder="0.0" required>
+                                <input type="number" step="0.1" min="0.1" max="2000" name="weight_kg" id="weight_kg" class="form-control" placeholder="0.0" value="{{ form_data.weight_kg|default('') }}" required>
                                 <span class="input-group-text">kg</span>
+                                <div class="invalid-feedback">Please enter a valid positive weight (0.1 to 2,000 kg).</div>
                             </div>
                             <div class="form-text">Weighed using cafeteria scale at dish drop station.</div>
                         </div>
@@ -59,26 +64,15 @@
                         <div class="col-md-6">
                             <label class="form-label small fw-semibold">Estimated Economic Value Lost</label>
                             <div class="p-2 border rounded bg-light d-flex align-items-center justify-content-between">
-                                <span class="small text-muted">Auto-estimated loss:</span>
+                                <span class="small text-muted">Estimated loss:</span>
                                 <span class="fw-bold text-danger fs-5" id="cost_preview">₹0.00</span>
                             </div>
-                            <div class="form-text">Based on institutional procurement index benchmarks.</div>
+                            <div class="form-text text-truncate" id="calc_formula_text" style="font-size: 0.78rem;">
+                                Institutional procurement benchmark estimate
+                            </div>
                         </div>
 
-                        <div class="col-12">
-                            <label class="form-label small fw-semibold">Primary Root Cause / Operational Reason</label>
-                            <select name="reason" class="form-select mb-2">
-                                <option value="Over-serving portion sizes on dining plates">Over-serving portion sizes on dining plates</option>
-                                <option value="Turnout unexpectedly lower than forecast">Turnout unexpectedly lower than forecast</option>
-                                <option value="Preparation trimmings / cutting sorting">Preparation trimmings / cutting sorting</option>
-                                <option value="Recipe taste / seasoning feedback">Recipe taste / seasoning feedback</option>
-                                <option value="Equipment / cold storage malfunction">Equipment / cold storage malfunction</option>
-                                <option value="Other operational cause">Other operational cause</option>
-                            </select>
-                        </div>
-
-                        <div class="col-12 mt-4 pt-2 border-top d-flex justify-content-between align-items-center">
-                            <span class="small text-muted"><i class="bi bi-shield-check text-success me-1"></i> Data saved directly to SQLite repository</span>
+                        <div class="col-12 mt-4 pt-2 border-top d-flex justify-content-end align-items-center">
                             <button type="submit" class="btn btn-ecogreen px-4 py-2">
                                 <i class="bi bi-check2-circle me-1"></i> Record Waste Entry
                             </button>

@@ -1,29 +1,56 @@
 {% extends "base.html" %}
 
-{% block title %}Redistribution Claims & OTP Verification - EcoPlate AI{% endblock %}
+{% block title %}{% if current_user.role == 'ngo' %}My Claims & Dispatch Tracking{% else %}Surplus Claims & OTP Verification{% endif %} - EcoPlate AI{% endblock %}
 
 {% block content %}
 <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center mb-4 gap-2">
     <div>
-        <h4 class="fw-bold mb-1"><i class="bi bi-truck text-secondary me-2"></i> Surplus Food Dispatch & Delivery Verification</h4>
-        <p class="text-muted small mb-0">End-to-end traceability with tamper-proof 6-digit OTP verification</p>
+        <h4 class="fw-bold mb-1">
+            <i class="bi bi-truck text-secondary me-2"></i>
+            {% if current_user.role == 'ngo' %}
+            My Claims &amp; Dispatch Tracking
+            {% else %}
+            Surplus Food Claims &amp; Delivery Verification
+            {% endif %}
+        </h4>
+        <p class="text-muted small mb-0">
+            {% if current_user.role == 'ngo' %}
+            Track your claimed surplus portions and present your 6-digit OTP at the kitchen gate during collection.
+            {% else %}
+            Verify incoming relief pickups for your kitchen's surplus food using the 6-digit OTP provided by the NGO.
+            {% endif %}
+        </p>
     </div>
     <a href="{{ url_for('donation.marketplace') }}" class="btn btn-outline-primary btn-sm">
-        <i class="bi bi-shop me-1"></i> Live Marketplace
+        <i class="bi bi-shop me-1"></i> Live Surplus Marketplace
     </a>
 </div>
 
 <div class="card eco-card border-0 shadow-sm">
+    <div class="card-header bg-light d-flex justify-content-between align-items-center py-3">
+        <span class="fw-bold text-dark">
+            <i class="bi bi-list-check text-primary me-2"></i>
+            {% if current_user.role == 'ngo' %}My Active &amp; Past Claims{% else %}Claims on My Kitchen's Surplus{% endif %}
+        </span>
+        <span class="badge bg-secondary">{{ claims|length }} Record{{ 's' if claims|length != 1 else '' }}</span>
+    </div>
     <div class="table-responsive">
-        <table class="table table-eco table-hover align-middle">
+        <table class="table table-eco table-hover align-middle mb-0">
             <thead>
                 <tr>
-                    <th>Claim ID & Date</th>
-                    <th>Food Item & Portions</th>
-                    <th>Claiming Organization</th>
+                    <th>Claim ID &amp; Date</th>
+                    <th>Food Item &amp; Portions</th>
+                    {% if current_user.role == 'ngo' %}
+                    <th>Source Kitchen &amp; Location</th>
+                    {% else %}
+                    <th>Receiving Relief NGO</th>
+                    {% endif %}
                     <th>Status</th>
-                    <th>Verification OTP</th>
-                    <th>Action</th>
+                    {% if current_user.role == 'ngo' %}
+                    <th class="text-center" style="min-width: 180px;">Pickup Verification OTP</th>
+                    {% else %}
+                    <th style="min-width: 220px;">Pickup Verification Action</th>
+                    {% endif %}
                 </tr>
             </thead>
             <tbody>
@@ -37,43 +64,87 @@
                         <div class="fw-semibold text-dark">{{ claim.listing.food_name }}</div>
                         <small class="text-muted">{{ claim.beneficiaries_count }} portions (≈{{ claim.listing.weight_approx_kg }} kg)</small>
                     </td>
+                    {% if current_user.role == 'ngo' %}
                     <td>
-                        <div class="fw-semibold">{{ claim.claimant_ngo.organization_name }}</div>
-                        <small class="text-muted"><i class="bi bi-telephone me-1"></i> {{ claim.claimant_ngo.contact_phone }}</small>
+                        <div class="fw-semibold text-dark">{{ claim.listing.donor.organization_name }}</div>
+                        <small class="text-muted d-block" title="{{ claim.listing.pickup_address }}">
+                            <i class="bi bi-geo-alt-fill text-success me-1"></i>{{ claim.listing.pickup_address }}
+                        </small>
+                        <small class="text-muted">
+                            <i class="bi bi-telephone me-1"></i>{{ claim.listing.contact_phone }}
+                        </small>
                     </td>
+                    {% else %}
+                    <td>
+                        <div class="fw-semibold text-dark">{{ claim.claimant_ngo.organization_name }}</div>
+                        <small class="text-muted d-block"><i class="bi bi-telephone me-1"></i>{{ claim.claimant_ngo.contact_phone }}</small>
+                        {% if claim.notes %}
+                        <small class="text-muted fst-italic">"{{ claim.notes }}"</small>
+                        {% endif %}
+                    </td>
+                    {% endif %}
                     <td>
                         {% if claim.status == 'Delivered' %}
-                            <span class="badge bg-success"><i class="bi bi-check-circle-fill me-1"></i> Delivered & Verified</span>
+                            <span class="badge bg-success"><i class="bi bi-check-circle-fill me-1"></i> Delivered</span>
                         {% elif claim.status == 'Claimed' %}
-                            <span class="badge bg-warning text-dark"><i class="bi bi-hourglass-split me-1"></i> Awaiting Pickup</span>
+                            <span class="badge bg-warning text-dark"><i class="bi bi-hourglass-split me-1"></i> Ready for Pickup</span>
                         {% else %}
                             <span class="badge bg-info">{{ claim.status }}</span>
                         {% endif %}
                     </td>
-                    <td>
-                        {% if current_user.role == 'ngo' or claim.status == 'Delivered' %}
-                            <span class="badge bg-dark font-monospace fs-6 px-3 py-2">{{ claim.verification_otp }}</span>
+
+                    {% if current_user.role == 'ngo' %}
+                    <!-- NGO Perspective: Prominent OTP Display -->
+                    <td class="text-center">
+                        {% if claim.status != 'Delivered' %}
+                        <div>
+                            <span class="badge bg-dark font-monospace fs-5 px-3 py-2 border border-secondary shadow-sm">
+                                {{ claim.verification_otp }}
+                            </span>
+                            <div class="small text-muted mt-1" style="font-size: 0.75rem;">
+                                Show this OTP to kitchen staff at pickup
+                            </div>
+                        </div>
                         {% else %}
-                            <span class="text-muted small"><i class="bi bi-shield-lock me-1"></i> Held by NGO Receiver</span>
+                        <div class="text-success small fw-semibold">
+                            <i class="bi bi-patch-check-fill me-1"></i> Delivery Verified
+                            {% if claim.delivered_at %}
+                            <div class="text-muted" style="font-size: 0.72rem;">{{ claim.delivered_at.strftime('%d %b, %I:%M %p') }}</div>
+                            {% endif %}
+                        </div>
                         {% endif %}
                     </td>
+                    {% else %}
+                    <!-- Kitchen Manager Perspective: Verification Form -->
                     <td>
-                        {% if claim.status != 'Delivered' and current_user.role == 'kitchen_manager' %}
-                        <!-- Donor verification form -->
-                        <form method="POST" action="{{ url_for('donation.verify_otp', claim_id=claim.id) }}" class="d-flex gap-2">
-                            <input type="text" name="otp" class="form-control form-control-sm font-monospace" placeholder="Enter 6-digit OTP" style="width: 140px;" required>
-                            <button type="submit" class="btn btn-sm btn-ecogreen">Verify</button>
+                        {% if claim.status != 'Delivered' %}
+                        <form method="POST" action="{{ url_for('donation.verify_otp', claim_id=claim.id) }}" class="d-flex gap-2 align-items-center">
+                            <input type="text" name="otp" class="form-control form-control-sm font-monospace" placeholder="Enter 6-digit OTP" pattern="[0-9]{6}" minlength="6" maxlength="6" inputmode="numeric" style="width: 140px;" title="Must be exactly 6 numeric digits" required>
+                            <button type="submit" class="btn btn-sm btn-ecogreen text-nowrap">
+                                <i class="bi bi-check2 me-1"></i> Verify &amp; Deliver
+                            </button>
                         </form>
-                        {% elif claim.status == 'Delivered' %}
-                            <span class="small text-success fw-semibold"><i class="bi bi-patch-check-fill me-1"></i> Verified on {{ claim.delivered_at.strftime('%I:%M %p') if claim.delivered_at else 'Delivered' }}</span>
                         {% else %}
-                            <span class="small text-muted">Provide OTP at kitchen gate</span>
+                        <div class="text-success small fw-semibold">
+                            <i class="bi bi-patch-check-fill me-1"></i> Verified &amp; Handed Over
+                            {% if claim.delivered_at %}
+                            <div class="text-muted" style="font-size: 0.72rem;">{{ claim.delivered_at.strftime('%d %b %Y, %I:%M %p') }}</div>
+                            {% endif %}
+                        </div>
                         {% endif %}
                     </td>
+                    {% endif %}
                 </tr>
                 {% else %}
                 <tr>
-                    <td colspan="6" class="text-center py-4 text-muted">No surplus food claims currently active.</td>
+                    <td colspan="5" class="text-center py-5 text-muted">
+                        <i class="bi bi-inbox fs-1 d-block mb-2 text-secondary opacity-50"></i>
+                        {% if current_user.role == 'ngo' %}
+                        No claims recorded yet. Browse the <a href="{{ url_for('donation.marketplace') }}" class="text-success fw-semibold">Live Surplus Marketplace</a> to rescue safe meals.
+                        {% else %}
+                        No claims currently placed on your kitchen's surplus food listings.
+                        {% endif %}
+                    </td>
                 </tr>
                 {% endfor %}
             </tbody>
@@ -81,3 +152,4 @@
     </div>
 </div>
 {% endblock %}
+
